@@ -180,7 +180,7 @@ function pseudo_optimal(;POP_FNAME_INDI_DF::DataFrames.DataFrame, ALL_POP_GENO_S
 	n = length(POP_FNAME_INDI_DF.POP)			### total number of populations in the landscape
 	l_max = convert(Int64, floor(sqrt(n)))		### maximum number of horizontally or vertically adjacent populations in a square-group or the number of horizontally or vertically adjacent populations in each of the 4 sides of the whole square landscape
 	k_max = minimum([N_LIB, n])					### maximum number of populations within a square-group which is ultimately restricted by the number of genotyping libraries (N_LIB) set
-	x = [k_max]; while x[end] > 4 push!(x, convert(Int64, sqrt(x[end]))); end; push!(x, 1) ### all the permutations of the number of non-overalapping square-groups that can fit within the landscape
+	x = [k_max]; while x[end] > 4 push!(x, convert(Int64, (sqrt(x[end])-2)^2)); end; push!(x, 1) ### all the permutations of the number of non-overalapping square-groups that can fit within the landscape
 	squares_array = reverse(x) ### start with 1 square array (square-group) comprising of all n populations, followed by 4 or 9 then 16 or 25, and so on...
 	LANDSCAPE_MATRIX = permutedims(convert(Array{String,2},reshape(POP_FNAME_INDI_DF.POP, l_max, l_max))) ### the arrangement of the populations across the entire square landscape
 	### arrays of population id and corresponding genotype and phenotype filenames for outputting
