@@ -6,7 +6,7 @@ Note that this is a production repository for GITHUB for higher visibility and t
 
 - original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha/legacy)
 - Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha/src)
-- testing scripts are found in the [test directory]((https://github.com/jeffersonfparil/GWAlpha/test))
+- testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha/test)
 
 Fork of:
 [GWAlpha](https://github.com/aflevel/GWAlpha)
