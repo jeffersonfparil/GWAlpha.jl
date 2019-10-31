@@ -1,1 +1,8 @@
-language: nix
+codecov: true
+coveralls: true
+
+language: julia
+julia:
+  - nightly
+  - 1.1
+  - 1.0.3

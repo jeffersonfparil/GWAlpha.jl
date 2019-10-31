@@ -1,0 +1,22 @@
+authors = ["jeffersonfparil <jeffersonparil@gmail.com>"]
+name = "GWAlpha"
+uuid = "db0974fc-fbd1-11e9-101e-a1a1bca81ff8"
+version = "0.1.0"
+repository = "https://github.com/jeffersonfparil/GWAlpha"
+description = "Genome-wide estimate of genetic effects for genome-wide association and genomic prediction of quantitative traits from pool sequencing data. This repository also include landscape simulations."
+keywords = "GWAS, GP, genomic prediction, genomic selection, genome-wide association, Pool-seq, pool sequencing, simulation, landscape, quantinemo, npstat, julia"
+
+[deps]
+DelimitedFiles
+Distributions
+LinearAlgebra
+Optim
+GLMNet
+Plots
+ProgressMeter
+DataFrames
+CSV
+ColorBrewer
+Statistics
+RCall
+
