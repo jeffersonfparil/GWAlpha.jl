@@ -24,8 +24,14 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
 
+before_script:
+  - pip install scipy
+  - pip install numpy
+  - pip install matplotlib
+
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
   - $TESTCMD -e 'using Pkg; Pkg.build(); Pkg.test(coverage=true);'
-
+  - python -c 'import numpy; import matplotlib; import scipy'
+  
