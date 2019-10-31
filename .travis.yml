@@ -4,6 +4,19 @@ julia:
   - 1.1
   - 1.0.3
 
+addons:
+  apt:
+    packages:
+      - python-matplotlib
+      - python3-matplotlib
+env:
+  matrix:
+    - PYTHON=python  # python 2.7
+    - PYTHON=python3 # python 3.5
+
+notifications:
+    email: false
+
 before_install:
   # linux
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
