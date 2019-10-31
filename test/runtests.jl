@@ -1,5 +1,6 @@
 using Pkg
-using Test
+using Base.Test
+using GWAlpha
 Pkg.build(; verbose = true)
 
-Test.@test println("Testing!")
+@test println("Testing!")
