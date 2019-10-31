@@ -7,6 +7,7 @@ description = "Genome-wide estimate of genetic effects for genome-wide associati
 keywords = "GWAS, GP, genomic prediction, genomic selection, genome-wide association, Pool-seq, pool sequencing, simulation, landscape, quantinemo, npstat, julia"
 
 [deps]
+Pkg = “44cfe95a-1eb2-52ea-b672-e2afdf69b78f”
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
