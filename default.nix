@@ -1,1 +1,1 @@
-nix-shell -p travisTest
+$ nix-shell -p travisTest
