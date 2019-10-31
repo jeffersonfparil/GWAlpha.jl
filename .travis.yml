@@ -7,11 +7,9 @@ julia:
 addons:
   apt:
     packages:
-      - python-matplotlib
       - python3-matplotlib
 env:
   matrix:
-    - PYTHON=python  # python 2.7
     - PYTHON=python3 # python 3.5
 
 notifications:
@@ -25,9 +23,9 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
 
 before_script:
-  - sudo pip install scipy
-  - sudo pip install numpy
-  - sudo pip install matplotlib
+  - pip3 install scipy --user
+  - pip3 install numpy --user
+  - pip3 install matplotlib --user
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
