@@ -14,7 +14,7 @@ VAR_rep=$6
 
 ########################
 ### SAMPLE EXECUTION ###
-# ./GPWASim_01_slurmer.sh 10 0.001 0.25 -0.25 0 1
+# ./GPASim_01_slurmer.sh 10 0.001 0.25 -0.25 0 1
 # or
 # for nqtl in 5 10 100; do
 #   for mr in 0.01 0.001 0.0001; do
@@ -22,7 +22,7 @@ VAR_rep=$6
 #       for bgs in 0.0 0.25 -0.25; do
 #         for grad in 0 1 2; do
 #            for rep in 1 2 3 4 5; dor
-#             ./GPWASim_01_slurmer.sh ${nqtl} ${mr} ${fgs} ${bgs} ${grad} ${rep}
+#             ./GPASim_01_slurmer.sh ${nqtl} ${mr} ${fgs} ${bgs} ${grad} ${rep}
 #            done
 #         done
 #       done
@@ -99,7 +99,7 @@ mkdir \${OUTDIR}                                                                
 
 # Simulate populations
 time \
-\${GEN_PRED_SRC_DIR}/GPWASim_01_simulate.sh \
+\${GEN_PRED_SRC_DIR}/GPASim_01_simulate.sh \
       \${QUANTINEMO_DIR} \
       \${GEN_PRED_SRC_DIR} \
       \${OUTDIR} \

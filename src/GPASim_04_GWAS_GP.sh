@@ -10,6 +10,7 @@
 OUTDIR=${1}             #output directory containing the parsed genotype and phenotype data
 QTL_SPEC_FNAME=${2}     #full path and file name of the QTL specification file
 GEN_PRED_SRC_DIR=${3}   #full path to the genomic_prediction/src directory
+nCores=${4}							#total number of parallel jobs
 
 ########################
 ### SAMPLE EXECUTION ###
@@ -25,12 +26,14 @@ GEN_PRED_SRC_DIR=${3}   #full path to the genomic_prediction/src directory
 # OUTDIR=${BASEDIR}/${OUTPREFIX}*/
 # QTL_SPEC_FNAME=${BASEDIR}/QTL_SPEC.csv
 # GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src
+# nCore=12
 #
 # time \
-# ${GEN_PRED_SRC_DIR}/GPWASim_04_GWAS_GP.sh \
+# ${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.sh \
 #   ${OUTDIR} \
 #   ${QTL_SPEC_FNAME} \
-#   ${GEN_PRED_SRC_DIR}
+#   ${GEN_PRED_SRC_DIR} \
+#		${nCores}
 ########################
 
 #############################
@@ -45,7 +48,7 @@ echo -e "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 echo -e "EXECUTE OF GWAS/GP:"
 echo -e "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#"
 
-### Randomize then split into nrow/sqrt(nrow) files (if nrow > 10 - arbitrary number 10 - seems big eh?!)
+### Randomize then split into sqrt(nrow) files if nrow > 10 (arbitrary number >10 - seems big enough to warrant splitting eh?!)
 ls POP_FNAME_*.csv > FNAMES_LIST.temp
 for f in $(cat FNAMES_LIST.temp)
 do
@@ -66,7 +69,7 @@ done
 ls POP_FNAME_*.csv > FNAMES_LIST.temp
 
 ### In parallel or iteratively
-parallel --link julia ${GEN_PRED_SRC_DIR}/GPWASim_04_GWAS_GP.jl \
+parallel --jobs ${nCores} --link julia ${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.jl \
 	${OUTDIR} \
 	{1} \
 	{2} \
@@ -78,7 +81,7 @@ do
   echo "#############################################"
   echo $i
   j=$(cut -d_ -f4 <<<$i)
-  julia ${GEN_PRED_SRC_DIR}/GPWASim_04_GWAS_GP.jl \
+  julia ${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.jl \
     ${OUTDIR} \
     ${i} \
     ${j} \

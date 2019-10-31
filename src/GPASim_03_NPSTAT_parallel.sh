@@ -27,7 +27,7 @@ NPSTAT_DIR=$5
 ########################
 ### SAMPLE EXECUTION ###
 ########################
-# ./GPWASim_03_NPSTAT_parallel.sh \
+# ./GPASim_03_NPSTAT_parallel.sh \
 # 1 \
 # QUANTI_g140_p1_POPULATION.pileup \
 # 100 \

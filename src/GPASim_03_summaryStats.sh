@@ -41,7 +41,7 @@ nCores=${10}            #number of cores to use for parallel computations of PC 
 # nCores=$(echo $(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l) / 2 | bc) #half the number of parallel threads for RAM-intensive PC and K covariate caluculations
 #
 # time \
-# ${GEN_PRED_SRC_DIR}/GPWASim_03_summaryStats.sh \
+# ${GEN_PRED_SRC_DIR}/GPASim_03_summaryStats.sh \
 #   ${OUTDIR} \
 #   ${OUTPREFIX} \
 #   ${POP_ID_txt} \
@@ -98,7 +98,7 @@ done
 echo -e "###############################################################################"
 echo -e "LISTING INPUT FILENAMES FOR ACROSS POPULATIONS GWAS/GP:"
 echo -e "###############################################################################"
-julia ${GEN_PRED_SRC_DIR}/GPWASim_03_GWAS_GP_pop_grouping.jl \
+julia ${GEN_PRED_SRC_DIR}/GPASim_03_GWAS_GP_pop_grouping.jl \
   POP_FNAME_WITHIN_INDI_DF.csv \
   ${OUTPREFIX}_ALLPOP_GENO.sync \
   ${OUTPREFIX}_ALLPOP_PHENO.pool \
@@ -119,7 +119,7 @@ julia ${GEN_PRED_SRC_DIR}/GPWASim_03_GWAS_GP_pop_grouping.jl \
 echo -e "################################################################################################"
 echo -e "BUILDING COVARIATES (INDIVIDUAL-GENOTYPE-DERIVED: PC & K) FOR WITHIN POPULATION GWAS/GP:"
 echo -e "################################################################################################"
-parallel -j $nCores ${GEN_PRED_SRC_DIR}/GPWASim_03_PC_K_parallel.sh \
+parallel -j $nCores ${GEN_PRED_SRC_DIR}/GPASim_03_PC_K_parallel.sh \
   ${GEN_PRED_SRC_DIR} \
   ${OUTPREFIX}_g${nGen}_p{1}_GENO.csv \
   {2} ::: $(uniq $POP_ID_txt) ::: PC K
@@ -138,7 +138,7 @@ echo -e "#######################################################################
 echo -e "BUILDING COVARIATES (INDIVIDUAL-GENOTYPE-DERIVED: PC & K) FOR ACROSS POPULATIONS GWAS/GP:"
 echo -e "################################################################################################"
 ls *_MERGED_GENO.csv > fnames_merged_geno_indi.temp
-parallel -j $nCores ${GEN_PRED_SRC_DIR}/GPWASim_03_PC_K_parallel.sh \
+parallel -j $nCores ${GEN_PRED_SRC_DIR}/GPASim_03_PC_K_parallel.sh \
   ${GEN_PRED_SRC_DIR} \
   {1} \
   {2} ::: $(cat fnames_merged_geno_indi.temp) ::: PC K
@@ -189,7 +189,7 @@ do
     # popool_size=$(cut -d, -f1 ${OUTPREFIX}_g${nGen}_p${i}_POOLS_PHENO.csv | head -n${j} | tail -n1)
     popool_size=10 #fixed to 10 for quick estimations though highly over-estimated summary statistics
     parallel \
-    ${GEN_PRED_SRC_DIR}/GPWASim_03_NPSTAT_parallel.sh \
+    ${GEN_PRED_SRC_DIR}/GPASim_03_NPSTAT_parallel.sh \
             {1} \
             ${OUTPREFIX}_g${nGen}_p${i}_POOL${j}.pileup \
             ${popool_size} \
@@ -240,7 +240,7 @@ do
   # pop_size=$(grep "^$i" $POP_ID_txt | wc -l)
   pop_size=10 #fixed to 10 for quick estimations though highly over-estimated summary statistics
   parallel \
-  ${GEN_PRED_SRC_DIR}/GPWASim_03_NPSTAT_parallel.sh \
+  ${GEN_PRED_SRC_DIR}/GPASim_03_NPSTAT_parallel.sh \
           {1} \
           ${OUTPREFIX}_g${nGen}_p${i}_POPULATION.pileup \
           ${pop_size} \
@@ -319,7 +319,7 @@ echo -e "#######################################################################
 echo -e "BUILDING COVARIATES (POOL-SEQ-DERIVED: FST) FOR WITHIN POPULATION GWAS/GP:"
 echo -e "################################################################################################"
 window_size=1000000 #1Mb
-parallel ${GEN_PRED_SRC_DIR}/GPWASim_03_Fst_parallel.sh \
+parallel ${GEN_PRED_SRC_DIR}/GPASim_03_Fst_parallel.sh \
   ${GEN_PRED_SRC_DIR} \
   ${window_size} \
   ${OUTPREFIX}_g${nGen}_p{1}_POOLS_GENO.sync \
@@ -332,7 +332,7 @@ echo -e "#######################################################################
 echo -e "BUILDING COVARIATES (POOL-SEQ-DERIVED: FST) FOR ACROSS POPULATIONS GWAS/GP:"
 echo -e "################################################################################################"
 window_size=1000000 #1Mb
-parallel --link ${GEN_PRED_SRC_DIR}/GPWASim_03_Fst_parallel.sh \
+parallel --link ${GEN_PRED_SRC_DIR}/GPASim_03_Fst_parallel.sh \
   ${GEN_PRED_SRC_DIR} \
   ${window_size} \
   {1} \

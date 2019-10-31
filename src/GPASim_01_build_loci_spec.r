@@ -26,7 +26,7 @@ Ne = as.numeric(args[6])                      ### effective population size
 ########################
 ### SAMPLE EXECUTION ###
 ########################
-# Rscript GPWASim_01_build_loci_spec.r \
+# Rscript GPASim_01_build_loci_spec.r \
 #   1000 \
 #   10 \
 #   100 \

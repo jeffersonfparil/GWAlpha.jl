@@ -24,26 +24,26 @@ GRADIENT=${16}              # gradient of QTL (foregrund and background selectio
 
 ####################
 ### SAMPLE EXECUTION
-# OUTDIR=/data/Lolium/Quantitative_Genetics/TEST_LANDSCAPING      # existing output directory to dump all the output files and folder
+# OUTDIR=/data/Lolium/Quantitative_Genetics/TEST_LANDSCAPING                      # existing output directory to dump all the output files and folder
 # DIR=/data/Lolium
-# QUANTINEMO_DIR=${DIR}/Softwares/quantinemo_linux                # location of the quantinemo executable
-# GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src        # full path to the genomic_prediction/src directory
-# nIndividuals=1000                                               # number of individuals to simulate
-# nLoci=1000                                                      # number of loci to simulate (neutral + QTL)
-# nQTL=10                                                         # number of QTL among the all the loci simulated
-# nBGS=100                                                        # number of background selection loci (should be highly polygenic >= 100)
-# nAlleles=5                                                      # number of alleles per loci, e.g. 5 for A,T,C,G, and DEL
-# allele_eff_model=CHISQ                                          # probability distribution to sample the allele effects from (i.e. CHISQ, NORM, & UNIF)
-# nGen=500                                                        # number of generations to simulate
-# nPop=16                                                         # number of populations/subpopulations to simulate (NOTE: must have a natural number square-root)
-# migration=0.00                                                  # migration rate across the populations (surrently using the 1D stepping stone model see line 117)
-# selection=0.25                                                  # selection intensity (trait of interest) defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
-# bg_selection=0.00                                               # background selection intensity defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
-# OUTPREFIX=LOLSIM_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
-# GRADIENT=0                                                      # uniformly distributed non-wildtype alleles
+# QUANTINEMO_DIR=${DIR}/Softwares/quantinemo_linux                                # location of the quantinemo executable
+# GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src                        # full path to the genomic_prediction/src directory
+# nIndividuals=1000                                                               # number of individuals to simulate
+# nLoci=1000                                                                      # number of loci to simulate (neutral + QTL)
+# nQTL=10                                                                         # number of QTL among the all the loci simulated
+# nBGS=100                                                                        # number of background selection loci (should be highly polygenic >= 100)
+# nAlleles=5                                                                      # number of alleles per loci, e.g. 5 for A,T,C,G, and DEL
+# allele_eff_model=CHISQ                                                          # probability distribution to sample the allele effects from (i.e. CHISQ, NORM, & UNIF)
+# nGen=500                                                                        # number of generations to simulate
+# nPop=16                                                                         # number of populations/subpopulations to simulate (NOTE: must have a natural number square-root)
+# migration=0.00                                                                  # migration rate across the populations (surrently using the 1D stepping stone model see line 117)
+# selection=0.25                                                                  # selection intensity (trait of interest) defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
+# bg_selection=0.00                                                               # background selection intensity defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
+# GRADIENT=0                                                                      # uniformly distributed non-wildtype alleles
+# OUTPREFIX=LOLSIM_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
 #
 # time \
-# ${GEN_PRED_SRC_DIR}/GPWASim_01_simulate.sh \
+# ${GEN_PRED_SRC_DIR}/GPASim_01_simulate.sh \
 #       $QUANTINEMO_DIR \
 #       $GEN_PRED_SRC_DIR \
 #       $OUTDIR \
@@ -92,7 +92,7 @@ echo -e "dispersal_border_model 2" >> ${OUTPREFIX}.ini          #absorbing bound
 # echo -e "dispersal_lattice_dims ($n_rows_cols, $n_rows_cols)" >> ${OUTPREFIX}.ini        #structure of population in a sqrt(n) x sqrt(n) square grid
 
 ###### Setting the genetic map
-Rscript ${GEN_PRED_SRC_DIR}/GPWASim_01_build_genome.r \
+Rscript ${GEN_PRED_SRC_DIR}/GPASim_01_build_genome.r \
   7 \
   97.7,151.5,63.3,119.2,89.1,115.2,113.7  \
   $nLoci
@@ -140,9 +140,9 @@ echo -e "quanti_nb_trait 2" >> ${OUTPREFIX}.ini                 #number of trait
     echo -e "ALLELE_COUNT_3,0.257344297077753" >> Allele_counts_dist.spec
     echo -e "ALLELE_COUNT_4,0.0660887235376553" >> Allele_counts_dist.spec
     echo -e "ALLELE_COUNT_5,0.00281708685426013" >> Allele_counts_dist.spec
-    echo -e "ALLELE_COUNT_6,0.0" >> Allele_counts_dist.spec ### input for the GPWASim_01_build_loci_spec.r script
+    echo -e "ALLELE_COUNT_6,0.0" >> Allele_counts_dist.spec ### input for the GPASim_01_build_loci_spec.r script
     ###### Simulate the loci specifications for trait of interest (QTL + zero-effect) and background selection trait
-    Rscript ${GEN_PRED_SRC_DIR}/GPWASim_01_build_loci_spec.r \
+    Rscript ${GEN_PRED_SRC_DIR}/GPASim_01_build_loci_spec.r \
       $nLoci \
       $nQTL \
       $nBGS \
@@ -209,7 +209,7 @@ echo -e "7\t284.07\t113.7" >> Lperenne_genome.spec
 ls genome_loci_*.temp | sed s/.temp//g | rev | cut -d'_' -f1 > chrom_id.temp
 cat genome_loci_*.temp > r_pos.temp
 paste -d' ' chrom_id.temp r_pos.temp > chrom_r.temp ### locus positions in cM
-Rscript ${GEN_PRED_SRC_DIR}/GPWASim_01_genome_QTL_spec_parsing.r \
+Rscript ${GEN_PRED_SRC_DIR}/GPASim_01_genome_QTL_spec_parsing.r \
   chrom_r.temp \
   Lperenne_genome.spec \
   QTL.spec \

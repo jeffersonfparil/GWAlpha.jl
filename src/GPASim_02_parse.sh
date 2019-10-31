@@ -41,7 +41,7 @@ nAlleles=$(head -n1 $fname_dat | cut -d' ' -f3)
 # nCores=$(echo $(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l) / 2 | bc) #half the number of parallel threads for RAM-intensive parsing
 #
 # time \
-# ${GEN_PRED_SRC_DIR}/GPWASim_02_parse.sh \
+# ${GEN_PRED_SRC_DIR}/GPASim_02_parse.sh \
 # ${OUTDIR} \
 # ${fname_dat} \
 # ${nPools} \
@@ -90,7 +90,7 @@ rm *.temp
 ### julia parsing script for each population
 cd $OUTDIR
 uniq ${MOST_RECENT_OUTPUT_DIR}/POP_ID.txt > POP_UNIQ.temp ### list the population ID names to be used for parallel execution of the julia parsing script
-parallel -j $nCores julia ${GEN_PRED_SRC_DIR}/GPWASim_02_parse.jl \
+parallel -j $nCores julia ${GEN_PRED_SRC_DIR}/GPASim_02_parse.jl \
                                             ${MOST_RECENT_OUTPUT_DIR}/${fname_dat%.dat*}_p{1}.dat \
                                             GENOME_SPEC.csv \
                                             QTL_min_max_GEBV.spec \
@@ -120,7 +120,7 @@ rm POP_UNIQ.temp
         ### (10) Pileup file format combining individual genotype into a single population of simulated sequencing reads (*_POPULATION.pileup) (nloci x 6) (NO HEADER)
 ### generate synchronized pileup file where each pool is one whole population --> to simulate Pool-seq per population
 ls ${MOST_RECENT_OUTPUT_DIR}/${fname_dat%.dat*}_p*_GENO.csv | grep -v POOL > fname_list.txt
-julia ${GEN_PRED_SRC_DIR}/GPWASim_02_pool.jl fname_list.txt $nLoci $nAlleles ${MOST_RECENT_OUTPUT_DIR}/PHENOTYPES_WITH_POPID.txt QTL_min_max_GEBV.spec
+julia ${GEN_PRED_SRC_DIR}/GPASim_02_pool.jl fname_list.txt $nLoci $nAlleles ${MOST_RECENT_OUTPUT_DIR}/PHENOTYPES_WITH_POPID.txt QTL_min_max_GEBV.spec
         ################
         #### inputs ####
         ################

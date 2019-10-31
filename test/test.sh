@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #############################
-### TEST GPWASim WORKFLOW ###
+### TEST GPASim WORKFLOW ###
 #############################
 
 ########################
@@ -10,7 +10,6 @@
 DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019_TEST
 OUTDIR=${DIR}/Output/                                     # existing output directory to dump all the output files and folder
 QUANTINEMO_DIR=${DIR}/Softwares/quantinemo_linux          # location of the quantinemo executable
-GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src  # full path to the genomic_prediction/src directory
 nIndividuals=1000                                         # number of individuals to simulate
 nLoci=1000                                                # number of loci to simulate (neutral + QTL)
 nQTL=10                                                   # number of QTL among the all the loci simulated
@@ -24,12 +23,12 @@ migration=0.001                                           # migration rate acros
 selection=0.25                                             # selection intensity (trait of interest) defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
 bg_selection=0.00                                         # background selection intensity defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
 GRADIENT=1                                                # diffusion gradient of non-wildtype alleles
-OUTPREFIX=LOLIUM_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
+rep=1
+prefix=LOLIUM
+OUTPREFIX=${prefix}_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
 fname_dat=${OUTPREFIX}_g${nGen}.dat                       # filename of the genotype (*.dat) file within the subdirectory of $OUTDIR
 nPools=5                                                  # number of pools to subdivided each population
 GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src  # full path to the location of the julia 1.0.5 binary
-JULIA_DIR=${DIR}/Softwares/julia-1.0.5/bin                # full path to the directory containing the pre-installed julia libraries we'll need
-JULIA_DEPOT=${DIR}/Softwares/julia_packages               # full path to the genomic_prediction/src directory
 INI_FNAME=${OUTPREFIX}.ini                                # full path and filename of the quantinemo initiation (*.ini) file
 nCores=5                                                  # number of cores to use for parallelisation
 OUT_SUBDIR=${OUTDIR}/${OUTPREFIX}*/                       # output directory containing the parsed genotype and phenotype data
@@ -41,18 +40,18 @@ N=500                                                     # maximum number of si
 
 
 ##################################
-### GPWASim_00_installation.sh ###
+### GPASim_00_installation.sh ###
 ##################################
 mkdir $DIR
 mkdir $OUTDIR
 time \
-${GEN_PRED_SRC_DIR}/GPWASim_00_installation.sh $DIR
+${GEN_PRED_SRC_DIR}/GPASim_00_installation.sh $DIR
 
 ##############################
-### GPWASim_01_simulate.sh ###
+### GPASim_01_simulate.sh ###
 ##############################
 time \
-${GEN_PRED_SRC_DIR}/GPWASim_01_simulate.sh \
+${GEN_PRED_SRC_DIR}/GPASim_01_simulate.sh \
       $QUANTINEMO_DIR \
       $GEN_PRED_SRC_DIR \
       $OUTDIR \
@@ -71,10 +70,10 @@ ${GEN_PRED_SRC_DIR}/GPWASim_01_simulate.sh \
       $GRADIENT
 
 ###########################
-### GPWASim_02_parse.sh ###
+### GPASim_02_parse.sh ###
 ###########################
 time \
-${GEN_PRED_SRC_DIR}/GPWASim_02_parse.sh \
+${GEN_PRED_SRC_DIR}/GPASim_02_parse.sh \
       ${OUTDIR} \
       ${fname_dat} \
       ${nPools} \
@@ -83,10 +82,10 @@ ${GEN_PRED_SRC_DIR}/GPWASim_02_parse.sh \
       ${nCores}
 
 ##################################
-### GPWASim_03_summaryStats.sh ###
+### GPASim_03_summaryStats.sh ###
 ##################################
 time \
-${GEN_PRED_SRC_DIR}/GPWASim_03_summaryStats.sh \
+${GEN_PRED_SRC_DIR}/GPASim_03_summaryStats.sh \
   ${OUT_SUBDIR} \
   ${OUTPREFIX} \
   ${POP_ID_txt} \
@@ -99,10 +98,11 @@ ${GEN_PRED_SRC_DIR}/GPWASim_03_summaryStats.sh \
   ${nCores}
 
 #############################
-### GPWASim_04_GWAS_GP.sh ###
+### GPASim_04_GWAS_GP.sh ###
 #############################
 time \
-${GEN_PRED_SRC_DIR}/GPWASim_04_GWAS_GP.sh \
+${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.sh \
   ${OUT_SUBDIR} \
   ${QTL_SPEC_FNAME} \
-  ${GEN_PRED_SRC_DIR}
+  ${GEN_PRED_SRC_DIR} \
+  ${nCores}

@@ -4,7 +4,7 @@
 ###       using Pool-seq data (i.e. sync format)       ### (Weir and Cockerham's method;
 ##########################################################
 # sample execution
-# julia ${GEN_PRED_SRC_DIR}/GPWASim_03_Fst.jl \
+# julia ${GEN_PRED_SRC_DIR}/GPASim_03_Fst.jl \
 # QUANTI_g140_POOLS_GENO.sync \
 # 1000000 \
 # 20,20,20,20,20 \

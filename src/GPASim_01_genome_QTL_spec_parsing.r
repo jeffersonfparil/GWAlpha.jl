@@ -27,7 +27,7 @@ QTL_idx_map_to_genome_spec  = read.delim(args[4], header=FALSE, sep="\t")
 ########################
 ### SAMPLE EXECUTION ###
 ########################
-# Rscript GPWASim_01_genome_QTL_spec_parsing.r \
+# Rscript GPASim_01_genome_QTL_spec_parsing.r \
 #   chrom_r.temp \
 #   Lperenne_genome.spec \
 #   QTL.spec \
