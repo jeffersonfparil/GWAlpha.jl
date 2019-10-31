@@ -324,7 +324,7 @@ mv ${DIR}/*_Alphas.csv ${DIR}/GPAS/
 # SORTED = dat[order(dat$LOD, decreasing=TRUE), ]
 # MEAN_LOD = mean(dat$LOD)
 # SDEV_LOD = sd(dat$LOD)
-
+# dnorm(dat$LOD, MEAN_LOD, SDEV_LOD)
 
 
 #######################################################################################################################
