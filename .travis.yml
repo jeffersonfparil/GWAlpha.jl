@@ -25,9 +25,9 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
 
 before_script:
-  - pip install scipy --user
-  - pip install numpy --user
-  - pip install matplotlib --user
+  - sudo pip install scipy
+  - sudo pip install numpy
+  - sudo pip install matplotlib
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
