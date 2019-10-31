@@ -1,1 +1,1 @@
-nix-shell -p hello
+ls
