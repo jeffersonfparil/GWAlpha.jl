@@ -1,2 +1,1 @@
-echo "PASSED?!"
-
+nix-shell -p travisTest
