@@ -180,7 +180,7 @@ function pseudo_optimal(;POP_FNAME_INDI_DF::DataFrames.DataFrame, ALL_POP_GENO_S
 	n = length(POP_FNAME_INDI_DF.POP)			### total number of populations in the landscape
 	l_max = convert(Int64, floor(sqrt(n)))		### maximum number of horizontally or vertically adjacent populations in a square-group or the number of horizontally or vertically adjacent populations in each of the 4 sides of the whole square landscape
 	k_max = minimum([N_LIB, n])					### maximum number of populations within a square-group which is ultimately restricted by the number of genotyping libraries (N_LIB) set
-	x = [k_max]; while x[end] > 4 push!(x, convert(Int64, round((sqrt(x[end])-2)^2))); end; (k_max % 2) == 0 ? push!(x, 1) : nothing ### all the permutations of the number of non-overalapping square-groups that can fit within the landscape
+	x = [k_max]; while x[end] > 4 push!(x, convert(Int64, round((sqrt(x[end])-2)^2))); end; (k_max % 2)==1 ? x=x[1:(end-1)] : nothing ### all the permutations of the number of non-overalapping square-groups that can fit within the landscape
 	squares_array = reverse(x) ### start with 1 square array (square-group) comprising of all n populations, followed by 4 or 9 then 16 or 25, and so on...
 	LANDSCAPE_MATRIX = permutedims(convert(Array{String,2},reshape(POP_FNAME_INDI_DF.POP, l_max, l_max))) ### the arrangement of the populations across the entire square landscape
 	### arrays of population id and corresponding genotype and phenotype filenames for outputting
@@ -203,13 +203,13 @@ function pseudo_optimal(;POP_FNAME_INDI_DF::DataFrames.DataFrame, ALL_POP_GENO_S
 		println(k)
 		l = convert(Int64, floor(sqrt(n/k))) ### number of horizontally or verically adjacent populations per square-group
 		merge_pop_names = [] ### array population names  initialization
-		for quad_row in 1:convert(Int64, round(l_max/l)) ### iterate across square-groups per row
+		for quad_row in 1:convert(Int64, sqrt(k)) ### iterate across square-groups per row
 			# quad_row = 3
 			row_ini = (l * (quad_row - 1)) ### top row of populations of the square-group
 			row_fin = (l * quad_row) ### bottom row of populations of the square-group
 			row = convert(Int64, rand([floor((row_fin-row_ini+1)/2), ceil((row_fin-row_ini+1)/2)], 1)[1]) + row_ini ### the verically middle population where if l (the number of vertically adjacent populations) is even then the "middle" population is randomly chosen as either floor(l/2) or ceil(l/2)
 			row > l_max ? row=l_max : row=row ### restricting row coordinate within the landscape
-			for quad_col in 1:convert(Int64, round(l_max/l)) ### iterate across square-groups per column
+			for quad_col in 1:convert(Int64, sqrt(k)) ### iterate across square-groups per column
 				# quad_col = 3
 				col_ini = (l * (quad_col -1)) ### left-most column of populations of the square group
 				col_fin = (l * quad_col) ### right-most column of populations of the square group
