@@ -310,10 +310,20 @@ mv ${DIR}/*_Alphas.csv ${DIR}/GPAS/
 #########################
 ### (7) PEAK ANALYSIS ###
 #########################
-### EXPLORATIONS in R:
-ARGS = commandArgs(trailing=TRUE)
-dat = read.csv(ARGS[1])
-# dat = read.csv("IS_pheno-FIXED_GWAlpha_Alphas.csv")
+# ### EXPLORATIONS in R:
+# ARGS = commandArgs(trailing=TRUE)
+# dat = read.csv(ARGS[1])
+# # dat = read.csv("IS_pheno-FIXED_GWAlpha_Alphas.csv")
+# str(dat)
+#
+# qqnorm(dat$ALPHA)
+# qqline(dat$ALPHA)
+# hist(dat$LOD)
+# plot(dat$LOD)
+#
+# SORTED = dat[order(dat$LOD, decreasing=TRUE), ]
+# MEAN_LOD = mean(dat$LOD)
+# SDEV_LOD = sd(dat$LOD)
 
 
 
