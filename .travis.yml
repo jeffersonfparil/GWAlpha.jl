@@ -25,9 +25,9 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools; fi
 
 before_script:
-  - pip3 install scipy
-  - pip3 install numpy
-  - pip3 install matplotlib
+  - pip3 install scipy --user
+  - pip3 install numpy --user
+  - pip3 install matplotlib --user
 
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
