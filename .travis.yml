@@ -24,12 +24,10 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev; fi
 
-before_script:
+script:
   - pip3 install setuptools --user
   - pip3 install numpy --user
   - pip3 install matplotlib --user
-
-script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
   - $TESTCMD -e 'using Pkg; Pkg.build(); Pkg.test(coverage=true);'
