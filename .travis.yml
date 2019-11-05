@@ -1,5 +1,3 @@
-sudo: required
-
 julia:
   - 1.1
   - 1.0.3
@@ -22,15 +20,13 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools; fi
-
-before_script:
-  - pip3 install numpy --user
-  - pip3 install matplotlib --user
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev; fi
 
 script:
+  - pip3 install setuptools --user
+  - pip3 install numpy --user
+  - pip3 install matplotlib --user
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
   - $TESTCMD -e 'using Pkg; Pkg.build(); Pkg.test(coverage=true);'
   - python -c 'import numpy; import matplotlib; import scipy'
-  
