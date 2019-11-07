@@ -38,7 +38,7 @@ r_github_packages: sahirbhatnagar/ggmix
 
 script:
   - pip3 install --upgrade pip==19.3.1 --user
-  - sudo apt install --allow-unauthenticated python3-pip --reinstall
+  - python3 -m pip install --user --upgrade pip
   - pip3 install setuptools --user
   - pip3 install numpy --user
   - pip3 install matplotlib --user
