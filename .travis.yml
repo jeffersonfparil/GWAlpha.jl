@@ -36,11 +36,12 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev python3-pip; fi
 
+r_github_packages: sahirbhatnagar/ggmix
+
 script:
   - pip3 install setuptools --user
   - pip3 install numpy --user
   - pip3 install matplotlib --user
-  - echo -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')" > ggmix_installer.r; Rscript ggmix_installer.r
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
 
