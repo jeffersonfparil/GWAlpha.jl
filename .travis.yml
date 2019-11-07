@@ -37,10 +37,10 @@ before_install:
 r_github_packages: sahirbhatnagar/ggmix
 
 script:
-  - pip3 install --upgrade pip
-  - pip3 install setuptools --user
-  - pip3 install numpy --user
-  - pip3 install matplotlib --user
+  - pip install --upgrade pip
+  - pip install setuptools --user
+  - pip install numpy --user
+  - pip install matplotlib --user
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
 
