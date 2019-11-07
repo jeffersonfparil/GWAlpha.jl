@@ -33,15 +33,14 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev python3-pip; fi
+  - pip3 install --upgrade pip==19.3.1 --user
+  - pip3 install setuptools --user
+  - pip3 install numpy --user
+  - pip3 install matplotlib --user
 
 r_github_packages: sahirbhatnagar/ggmix
 
 script:
-  - pip3 install --upgrade pip==19.3.1 --user
-  - python3 -m pip install --user --upgrade pip
-  - pip3 install setuptools --user
-  - pip3 install numpy --user
-  - pip3 install matplotlib --user
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
 
