@@ -1,11 +1,8 @@
 # GWAlpha.jl
 
-<p align="center">
-  <img src="misc/Adaptive Evolution Logo mod.png" width="350">
-</p>
-
 [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
-<a href="https://github.com/jeffersonfparil/GWAlpha/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a>
+<a href="https://github.com/jeffersonfparil/GWAlpha/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"> </a>
+<p align="left"><img src="misc/Adaptive Evolution Logo mod.png" width="100"></p>
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
 
