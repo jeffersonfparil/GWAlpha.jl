@@ -1,5 +1,9 @@
 # GWAlpha.jl
 
+<p align="center">
+  <img src="misc/Adaptive Evolution Logo mod.svg" width="350">
+</p>
+
 [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
 <a href="https://github.com/jeffersonfparil/GWAlpha/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a>
 
