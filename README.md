@@ -30,8 +30,6 @@ Pkg.test("GWAlpha")
 - Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/src)
 - testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/test)
 
-Fork of:
-[GWAlpha](https://github.com/aflevel/GWAlpha)
+## Citations
 
-Citation:
 Fournier-Level A, Robin C, Balding DJ (2016). GWAlpha: Genome-Wide estimation of additive effects (Alpha) based on trait quantile distribution from pool-sequencing experiments. Submitted to Bioinformatics
