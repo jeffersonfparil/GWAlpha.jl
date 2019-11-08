@@ -20,8 +20,8 @@ using Optim
 using GLMNet
 using RCall
 
-include("LMM_module")
-include("pval_heuristic_module")
+include("LMM_module.jl")
+include("pval_heuristic_module.jl")
 
 # ############################################################################################
 # ### TESTS
