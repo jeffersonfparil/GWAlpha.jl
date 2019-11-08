@@ -11,11 +11,11 @@ using DataFrames
 using CSV
 using ColorBrewer
 
-inclue("sync_parsing_module")
-inclue("filter_sync_module")
-inclue("LMM_module")
-inclue("GP_module")
-inclue("pval_heuristic_module")
+include("sync_parsing_module")
+include("filter_sync_module")
+include("LMM_module")
+include("GP_module")
+include("pval_heuristic_module")
 
 ############################
 ### function definitions ###
