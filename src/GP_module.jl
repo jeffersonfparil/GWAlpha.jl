@@ -19,7 +19,11 @@ using Distributions
 using Optim
 using GLMNet
 using RCall
-
+# JULIA_SCRIPT_HOME = @__DIR__
+# # JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
+# push!(LOAD_PATH, JULIA_SCRIPT_HOME)
+# using LMM_module
+# using pval_heuristic_module
 include("LMM_module.jl")
 include("pval_heuristic_module.jl")
 

@@ -41,10 +41,11 @@ using CSV
 using DataFrames
 using Statistics
 using DelimitedFiles
-JULIA_SCRIPT_HOME = @__DIR__
-# JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
-push!(LOAD_PATH, JULIA_SCRIPT_HOME)
-using poolFST_module
+# JULIA_SCRIPT_HOME = @__DIR__
+# # JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
+# push!(LOAD_PATH, JULIA_SCRIPT_HOME)
+# using poolFST_module
+include("poolFST_module.jl")
 
 poolFST_module.Fst_across_pools(sync_fname=sync_fname, window_size=window_size, pool_sizes=pool_sizes, METHOD=METHOD)
 poolFST_module.Fst_pairwise(sync_fname=sync_fname, window_size=window_size, pool_sizes=pool_sizes, METHOD=METHOD)

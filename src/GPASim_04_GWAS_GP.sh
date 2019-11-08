@@ -76,7 +76,7 @@ parallel --jobs ${nCores} --link julia ${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.jl 
 	${QTL_SPEC_FNAME} \
 	1 \
 	Bonferroni \
-	0.01 ::: $(cat FNAMES_LIST.temp) ::: $(cut -d_ -f4 FNAMES_LIST.temp) || for i in $(cat FNAMES_LIST.temp)
+	0.01 ::: $(cat FNAMES_LIST.temp) ::: $(cut -d_ -f4 FNAMES_LIST.temp) || for i in $(grep -vf <<<$(ls CROSS_VALIDATION*) FNAMES_LIST.temp)
 do
   echo "#############################################"
   echo $i

@@ -1,5 +1,8 @@
 module GWAlpha
 
+#####################
+### load packages ###
+#####################
 using DelimitedFiles
 using Distributions
 using LinearAlgebra
@@ -42,7 +45,7 @@ function cost_function_RR(lambda::Array{Float64,1}, y::Array{Float64,1}, X::Arra
 	return(COST)
 end
 
-function GWAlpha(filename_sync::String, filename_phen_py::String, MAF::Float64)
+function GWAlpha_ML(filename_sync::String, filename_phen_py::String, MAF::Float64)
 	### load the sync and phenotype files
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
 	phen = DelimitedFiles.readdlm(filename_phen_py)
@@ -378,7 +381,7 @@ function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DE
 	# ################################
 
 	if MODEL == "FIXED_GWAlpha"
-		OUT = GWAlpha(filename_sync, filename_phen, MAF)
+		OUT = GWAlpha_ML(filename_sync, filename_phen, MAF)
 		COVAR_EFF = nothing
 	else
 		OUT, COVAR_EFF = GWAlpha_GP(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
@@ -394,6 +397,5 @@ function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DE
 	println("===============================================================")
 	return(OUT, COVAR_EFF)
 end
-
 
 end

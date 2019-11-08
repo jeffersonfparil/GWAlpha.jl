@@ -19,15 +19,20 @@ using ProgressMeter
 using DataFrames
 using CSV
 using ColorBrewer
-JULIA_SCRIPT_HOME = @__DIR__
-# # test:
-# JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
-push!(LOAD_PATH, JULIA_SCRIPT_HOME)
-using sync_parsing_module
-using filter_sync_module
-using LMM_module
-using GP_module
-using pval_heuristic_module
+# JULIA_SCRIPT_HOME = @__DIR__
+# # # test:
+# # JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
+# push!(LOAD_PATH, JULIA_SCRIPT_HOME)
+# using sync_parsing_module
+# using filter_sync_module
+# using LMM_module
+# using GP_module
+# using pval_heuristic_module
+include("sync_parsing_module.jl")
+include("filter_sync_module.jl")
+include("LMM_module.jl")
+include("GP_module.jl")
+include("pval_heuristic_module.jl")
 
 # ##########################################
 # ### TESTS:
@@ -64,7 +69,7 @@ function cost_function_RR(lambda::Array{Float64,1}, y::Array{Float64,1}, X::Arra
 	return(COST)
 end
 
-function GWAlpha(filename_sync::String, filename_phen_py::String, MAF::Float64)
+function GWAlpha_ML(filename_sync::String, filename_phen_py::String, MAF::Float64)
 	### load the sync and phenotype files
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
 	phen = DelimitedFiles.readdlm(filename_phen_py)
@@ -400,7 +405,7 @@ function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DE
 	# ################################
 
 	if MODEL == "FIXED_GWAlpha"
-		OUT = GWAlpha(filename_sync, filename_phen, MAF)
+		OUT = GWAlpha_ML(filename_sync, filename_phen, MAF)
 		COVAR_EFF = nothing
 	else
 		OUT, COVAR_EFF = GWAlpha_GP(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
@@ -421,7 +426,7 @@ end #end of PoolGPAS_module
 
 # ############################################################################################
 # ### SAMPLE EXECUTION
-# @time OUT = GWAlpha(filename_sync, filename_phen_py, MAF);
+# @time OUT = GWAlpha_ML(filename_sync, filename_phen_py, MAF);
 # 	LOCI = OUT.LOCUS_ID;
 # 	EFF_GWAlpha = OUT.ALPHA;
 # 	LOD_GWAlpha = OUT.LOD;

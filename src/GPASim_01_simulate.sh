@@ -300,4 +300,5 @@ rm *.temp
 ### EXECUTION ###
 #################
 ${QUANTINEMO_DIR}/quantinemo ${OUTPREFIX}.ini
+rm GENOTYPES_INI.dat UNIFORM.dat WILDTYPE.dat || echo -e "Using NULL gradient of allele effects across the landscape."
 echo "#########################################################################################"

@@ -20,15 +20,20 @@ using ProgressMeter
 using Random
 using Plots; Plots.pyplot()
 using ColorBrewer
-JULIA_SCRIPT_HOME = @__DIR__
-# # test:
-# JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
-push!(LOAD_PATH, JULIA_SCRIPT_HOME)
-using GWAS_module
-using GP_module
-using sync_parsing_module
-using filter_sync_module
-using PoolGPAS_module
+# JULIA_SCRIPT_HOME = @__DIR__
+# # # test:
+# # JULIA_SCRIPT_HOME = "/data/Lolium/Softwares/genomic_prediction/src"
+# push!(LOAD_PATH, JULIA_SCRIPT_HOME)
+# using GWAS_module
+# using GP_module
+# using sync_parsing_module
+# using filter_sync_module
+# using PoolGPAS_module
+include("GWAS_module.jl")
+include("GP_module.jl")
+include("sync_parsing_module.jl")
+include("filter_sync_module.jl")
+include("PoolGPAS_module.jl")
 
 ############################
 ###						 ###

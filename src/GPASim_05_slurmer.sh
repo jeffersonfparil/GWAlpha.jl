@@ -21,10 +21,40 @@ VAR_prefix=${9}
 # VAR_rep=1                       # 1, 2, 3, 4, 5
 # VAR_partition=mig               # cloud, physical, snowy, ..., etc
 
-########################
-### SAMPLE EXECUTION ###
+# ########################
+# ### SAMPLE EXECUTION ###
+# ### single execution
+# cd /data/cephfs/punim0543/jparil/Softwares/genomic_prediction/src
 # ./GPASim_05_slurmer.sh /data/cephfs/punim0543/jparil 100 0.001 0.25 -0.25 0 1 mig LOLSIM
-########################
+# ### loop!
+# cd /data/cephfs/punim0543/jparil/Softwares/genomic_prediction/src
+# for VAR_nQTL in 5 10 100                                  ### NUMBER OF QTL: 5 10 100
+# do
+#   for VAR_migration in 0.001 0.0001                       ### MIGRATION_RATES: 0.01 0.001 0.0001
+#   do
+#     for VAR_foreground_selection in 0.25                  ### FOREGROUND SELECTION SLOPES: 0.00 0.25
+#     do
+#       for VAR_background_selection in 0.00 0.25 -0.25     ### BACKGROUND SELECTION SLOPES: 0.00 0.25 -0.25
+#       do
+#         for VAR_gradient in 0 1 2                         ### NON-ZERO QTL ALLELE GRADIENTS: 0 1 2
+#         do
+#           for VAR_rep in 1 2 3 4 5                        ### REPLICATION NUMBER: 1 2 3 4 5
+#           do
+#             if [ $VAR_rep -gt 3  ]
+#             then
+#               VAR_partition=physical
+#             else
+#               VAR_partition=snowy
+#             fi
+#             echo ${VAR_nQTL}QTL-${VAR_migration}mr-${VAR_foreground_selection}fgs-${VAR_background_selection}bgs-${VAR_gradient}grad-${VAR_rep}rep-${VAR_partition}part-LOLSIM
+#             ./GPASim_05_slurmer.sh /data/cephfs/punim0543/jparil ${VAR_nQTL} ${VAR_migration} ${VAR_foreground_selection} ${VAR_background_selection} ${VAR_gradient} ${VAR_rep} ${VAR_partition} LOLSIM
+#           done
+#         done
+#       done
+#     done
+#   done
+# done
+# ########################
 
 ########################################
 ### AUXILLARY NON-USER-FACING INPUTS ###
@@ -32,12 +62,13 @@ VAR_prefix=${9}
 VAR_indiv=1000                                                  ### number of individuals per poplation to simulate
 VAR_nLoci=10000                                                 ### number of loci per individual to simulate
 VAR_nBGS=100                                                    ### number of background selection QTL
-VAR_nGen=500                                                    ### number of generations to simulate
+VAR_nGen=100                                                    ### number of generations to simulate ### set to 100 since test/test_summstats.sh hint at complete fixation occurs on avarge at >10 generations and we want a bit variation for GPAS CV to work!
 VAR_nPop=100                                                    ### number of populations (m x m: should have a natural number square-root)
 VAR_nPools=5                                                    ### number of pools for within population Pool-seq
 VAR_maxlib=500                                                  ### maximum number of genotyping libraries
 VAR_account=punim0543                                           ### Spartan account name
 VAR_reqmem=$(echo "${VAR_nLoci} * ${VAR_indiv} / 1000000" | bc) ### estimated RAM requirement in gigabytes per parallel job during parsing, summary statistics including PC and K estimations and GPAS CV
+VAR_timelim="5-0:0:00"                                          ### maximum computing time limit in days-hours:minutes:seconds
 if [ $VAR_partition == cloud ]
 then
   VAR_ncores=12                                                 ### number of cores avaible given the partition
@@ -91,7 +122,7 @@ echo -e "
 # The amount of memory in megabytes per process in the job:
 #SBATCH --mem=${VAR_mem}GB
 # The maximum running time of the job in days-hours:mins:sec
-#SBATCH --time=5-0:0:00
+#SBATCH --time=${VAR_timelim}
 # Send yourself an email when the job:
 # aborts abnormally (fails)
 # #SBATCH --mail-type=FAIL
@@ -169,6 +200,7 @@ head -n1 \${GEN_PRED_SRC_DIR}/GPASim_02_parse.sh > \${temp_SCRIPT}
 echo -e 'module load parallel/20181222-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load Julia/1.1.1-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load R/3.5.2-GCC-6.2.0' >> \${temp_SCRIPT}
+echo -e 'module load GSL/2.5-intel-2018.u4' >> \${temp_SCRIPT}
 tail -n+2 \${GEN_PRED_SRC_DIR}/GPASim_02_parse.sh >> \${temp_SCRIPT}
 chmod +x \${temp_SCRIPT}
 ### Execute parsing script
@@ -189,6 +221,7 @@ head -n1 \${GEN_PRED_SRC_DIR}/GPASim_03_summaryStats.sh > \${temp_SCRIPT}
 echo -e 'module load parallel/20181222-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load Julia/1.1.1-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load R/3.5.2-GCC-6.2.0' >> \${temp_SCRIPT}
+echo -e 'module load GSL/2.5-intel-2018.u4' >> \${temp_SCRIPT}
 tail -n+2 \${GEN_PRED_SRC_DIR}/GPASim_03_summaryStats.sh >> \${temp_SCRIPT}
 chmod +x \${temp_SCRIPT}
 ### Execute summary statistics script
@@ -213,6 +246,7 @@ head -n1 \${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.sh > \${temp_SCRIPT}
 echo -e 'module load parallel/20181222-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load Julia/1.1.1-spartan_gcc-6.2.0.lua' >> \${temp_SCRIPT}
 echo -e 'module load R/3.5.2-GCC-6.2.0' >> \${temp_SCRIPT}
+echo -e 'module load GSL/2.5-intel-2018.u4' >> \${temp_SCRIPT}
 tail -n+2 \${GEN_PRED_SRC_DIR}/GPASim_04_GWAS_GP.sh >> \${temp_SCRIPT}
 chmod +x \${temp_SCRIPT}
 ### Execute genomic prediction and association analysis cross-validation script
@@ -222,9 +256,33 @@ time ./\${temp_SCRIPT} \
       \${GEN_PRED_SRC_DIR} \
       \${nCores}
 
+echo '#######################################################'
+echo 'Clean up'
+echo '#######################################################'
+### Move initiation and specificications file into a folder, expose CROSS_VALIDATION_OUTPUT_MERGED.csv, and zip
+mkdir \${OUTDIR}/SPECS
+mv \${OUTDIR}/*.spec \${OUTDIR}/SPECS
+mv \${OUTDIR}/*.ini \${OUTDIR}/SPECS
+mv \${OUTDIR}/*.txt \${OUTDIR}/SPECS
+mv \${OUTDIR}/*.csv \${OUTDIR}/SPECS
+mv \${OUTDIR}/*.log \${OUTDIR}/SPECS
+mv \${OUT_SUBDIR}/CROSS_VALIDATION_OUTPUT_MERGED.csv \${OUTDIR}
+tar --remove-files -zcf \${OUTDIR}/SPECS.tar.gz \${OUTDIR}/SPECS
+tar --remove-files -zcf \${OUTDIR}/RAW_DATA.tar.gz \${OUT_SUBDIR}
 " >> ${VAR_prefix}_${VAR_rep}rep_${VAR_nQTL}QTL_${VAR_migration}mr_${VAR_foreground_selection}fgs_${VAR_background_selection}bgs_${VAR_gradient}grad.slurm
 
 #########################
 ### SUBMIT INTO QUEUE ###
 #########################
 sbatch ${VAR_prefix}_${VAR_rep}rep_${VAR_nQTL}QTL_${VAR_migration}mr_${VAR_foreground_selection}fgs_${VAR_background_selection}bgs_${VAR_gradient}grad.slurm
+
+# ##################
+# ### MONITORING ###
+# ##################
+# VAR_user="jparil"
+# squeue -u ${VAR_user}
+# ### monitor via htop in the node (testing: considering only the first job)
+# NODE_ID=$(squeue -u ${VAR_user} | grep R | tail -n+2 | head -n1 | sed -z "s/ \+/\t/g" | cut -f2- | rev | cut -f1 | rev)
+# ssh $NODE_ID
+# htop
+# logout
