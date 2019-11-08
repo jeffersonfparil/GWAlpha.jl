@@ -6,7 +6,11 @@
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
 
-Genome-wide estimate of genetic effects for genome-wide association and genomic prediction of quantitative traits from pool sequencing data. This repository also include landscape simulations using [quantinemo2](https://github.com/jgx65/quantinemo) for testing individual-based and pool-based genome-wide association and genomic prediction algorithms and models, which makes use of [npstat](https://github.com/lucaferretti/npstat) for extracting population genetics summary statistics as covariates for some models. A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/genomic_prediction).
+A [Julia](https://julialang.org/downloads/) package for genome-wide association (GWAS) and genomic prediction (GP) of quantitative traits from pool sequencing (Pool-seq) data.
+
+This repository include a suite of scripts for genomic landscape simulation using [quantinemo2](https://github.com/jgx65/quantinemo) to test individual-based and Pool-seq-based GWAS and GP algorithms and models, which makes use of [npstat](https://github.com/lucaferretti/npstat) for extracting population genetics summary statistics as covariates for some models.
+
+A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/genomic_prediction).
 
 ## Installation
 ```
