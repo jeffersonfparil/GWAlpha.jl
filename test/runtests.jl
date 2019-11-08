@@ -1,8 +1,8 @@
 using Test
 using GWAlpha
 
-function runGWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL::String, COVARIATE=nothing)
-    GWAlpha.PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL::String, COVARIATE=nothing)
+function runGWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha"::String, COVARIATE=nothing)
+    GWAlpha.PoolGPAS(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
     return(0)
 end
 
