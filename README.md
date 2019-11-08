@@ -9,6 +9,16 @@ Genome-wide estimate of genetic effects for genome-wide association and genomic 
 
 Note that this is a production repository for GITHUB for higher visibility and that the working repository where testing and development are being pushed into is reposited in [GITLAB](https://gitlab.com/jeffersonfparil/genomic_prediction).
 
+## Installation
+`using Pkg`
+`Pkg.add(PackageSpec(url="https://github.com/jeffersonfparil/GWAlpha.git", rev="master"))`
+`Pkg.build()`
+
+## Testing
+`using GWAlpha`
+
+## Contents
+
 - original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/legacy)
 - Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/src)
 - testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/test)
