@@ -16,6 +16,7 @@ Note that this is a production repository for GITHUB for higher visibility and t
 
 ## Testing
 - `using Pkg`
+- `Pkg.update("GWAlpha")`
 - `Pkg.test("GWAlpha")`
 
 ## Contents
