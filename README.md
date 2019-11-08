@@ -32,5 +32,6 @@ Pkg.test("GWAlpha")
 
 Fork of:
 [GWAlpha](https://github.com/aflevel/GWAlpha)
+
 Citation:
 Fournier-Level A, Robin C, Balding DJ (2016). GWAlpha: Genome-Wide estimation of additive effects (Alpha) based on trait quantile distribution from pool-sequencing experiments. Submitted to Bioinformatics
