@@ -1,6 +1,7 @@
 # GWAlpha.jl
 
-<a align="left"><img src="misc/Adaptive Evolution Logo mod.png" width="150"></a> [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
+<a href="https://adaptive-evolution.biosciences.unimelb.edu.au/"><img src="misc/Adaptive Evolution Logo mod.png" width="150"></a>
+[![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
 <a href="https://github.com/jeffersonfparil/GWAlpha/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a>
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
@@ -25,9 +26,9 @@ Pkg.test("GWAlpha")
 
 ## Contents
 
-- original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/legacy)
-- Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/src)
-- testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha/tree/master/test)
+- original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/legacy)
+- Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/src)
+- testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/test)
 
 Fork of:
 [GWAlpha](https://github.com/aflevel/GWAlpha)
