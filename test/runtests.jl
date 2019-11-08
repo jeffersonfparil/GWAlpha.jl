@@ -7,15 +7,15 @@ function runGWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, 
 end
 
 ### GWAlpha for GWAS
-Test.@test runGWAlpha("UG_MAPQ20_BASQ20_MAF0.001_DEPTH10.sync",
-                      "UG_pheno.py",
+Test.@test runGWAlpha("LOLIUM_1rep_10QTL_0.001mr_0.25fgs_0.00bgs_1grad_g500_p16_POOLS_GENO.sync",
+                      "LOLIUM_1rep_10QTL_0.001mr_0.25fgs_0.00bgs_1grad_g500_p16_POOLS_PHENO.py",
                       0.01,
                       10,
                       MODEL="FIXED_GWAlpha",
                       COVARIATE=nothing) == 0
 ### GWAlpha for GP
-Test.@test runGWAlpha("UG_MAPQ20_BASQ20_MAF0.001_DEPTH10.sync",
-                      "UG_pheno.csv",
+Test.@test runGWAlpha("LOLIUM_1rep_10QTL_0.001mr_0.25fgs_0.00bgs_1grad_g500_p16_POOLS_GENO.sync",
+                      "LOLIUM_1rep_10QTL_0.001mr_0.25fgs_0.00bgs_1grad_g500_p16_POOLS_PHENO.csv",
                       0.01,
                       10,
                       MODEL="FIXED_RR",
