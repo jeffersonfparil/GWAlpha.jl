@@ -1,7 +1,7 @@
 # GWAlpha.jl
 
 <p align="center">
-  <img src="misc/Adaptive Evolution Logo mod.svg" width="350">
+  <img src="misc/Adaptive Evolution Logo mod.png" width="350">
 </p>
 
 [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
