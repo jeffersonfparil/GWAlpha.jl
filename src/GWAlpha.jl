@@ -177,10 +177,13 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 	geno = try
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
 	catch
-		rm(string(split(filename_sync, ".")[end-1], "_ALLELEFREQ.csv"))
-		sync_parsing_module.sync_parse(filename_sync); #output will be string(split(filename_sync, ".")[1], "_ALLELEFREQ.csv")
-		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
-		#FORMAT: CHROM,POS,REF,ALLELE,ALLELE_FREQ_POOL1,ALLELE_FREQ_POOL2,...ALLELE_FREQ_POOLN
+		try
+			rm(string(split(filename_sync, ".")[end-1], "_ALLELEFREQ.csv"))
+		catch
+			sync_parsing_module.sync_parse(filename_sync); #output will be string(split(filename_sync, ".")[1], "_ALLELEFREQ.csv")
+			DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
+			#FORMAT: CHROM,POS,REF,ALLELE,ALLELE_FREQ_POOL1,ALLELE_FREQ_POOL2,...ALLELE_FREQ_POOLN
+		end
 	end
 	X_raw = convert(Array{Float64}, geno[:, 4:end]') #npools x nSNP_alleles
 	n = size(X_raw)[1]
