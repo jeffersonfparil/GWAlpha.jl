@@ -1,4 +1,4 @@
-# GWAlpha
+# GWAlpha.jl
 
 [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha)
 <a href="https://github.com/jeffersonfparil/GWAlpha/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a>
@@ -11,11 +11,12 @@ Note that this is a production repository for GITHUB for higher visibility and t
 
 ## Installation
 `using Pkg`
-`Pkg.add(PackageSpec(url="https://github.com/jeffersonfparil/GWAlpha.git", rev="master"))`
+`Pkg.add(PackageSpec(url="https://github.com/jeffersonfparil/GWAlpha.jl.git", rev="master"))`
 `Pkg.build()`
 
 ## Testing
-`using GWAlpha`
+`using Pkg`
+`Pkg.test("GWAlpha.jl")`
 
 ## Contents
 
