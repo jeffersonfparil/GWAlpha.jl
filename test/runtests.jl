@@ -19,4 +19,4 @@ Test.@test runGWAlpha("LOLIUM_1rep_10QTL_0.001mr_0.25fgs_0.00bgs_1grad_g500_p16_
                       0.01,
                       10,
                       MODEL="FIXED_RR",
-                      COVARIATE="UG_MAPQ20_BASQ20_MAF0.001_DEPTH10_COVARIATE_FST.csv") == 0
+                      COVARIATE=nothing) == 0
