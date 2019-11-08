@@ -11,11 +11,12 @@ using DataFrames
 using CSV
 using ColorBrewer
 
-include("sync_parsing_module")
-include("filter_sync_module")
-include("LMM_module")
-include("GP_module")
-include("pval_heuristic_module")
+JULIA_SCRIPT_HOME = @__DIR__
+using sync_parsing_module
+using filter_sync_module
+using LMM_module
+using GP_module
+using pval_heuristic_module
 
 ############################
 ### function definitions ###
