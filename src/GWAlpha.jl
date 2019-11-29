@@ -1,9 +1,3 @@
-##############################################################
-###														   ###
-### Pool-based genomic prediction and association analysis ###
-###														   ###
-##############################################################
-
 module GWAlpha
 
 #####################
@@ -485,14 +479,4 @@ function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DE
 	return(OUT, COVAR_EFF)
 end
 
-end #end of PoolGPAS_module
-
-# ############################################################################################
-# ### SAMPLE EXECUTION
-# @time OUT = GWAlpha_ML(filename_sync, filename_phen_py, MAF);
-# 	LOCI = OUT.LOCUS_ID;
-# 	EFF_GWAlpha = OUT.ALPHA;
-# 	LOD_GWAlpha = OUT.LOD;
-# @time OUT = GWAlpha_GP(filename_sync, filename_phen_csv, MAF, DEPTH, MODEL="FIXED_LS", COVARIATE=nothing);
-# 	EFF_FIXED_LS=OUT.BETA[2:end];
-# 	LOD_FIXED_LS=OUT.LOD;
+end
