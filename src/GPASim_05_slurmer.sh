@@ -40,9 +40,9 @@ VAR_prefix=${9}
 #         do
 #           for VAR_rep in 1 2 3 4 5                        ### REPLICATION NUMBER: 1 2 3 4 5
 #           do
-#             if [ $VAR_rep -gt 3  ]
+#             if [ $VAR_rep -gt 5  ]
 #             then
-#               VAR_partition=physical
+#               VAR_partition=physical ### DO NOT USE! TOO MUCH ERROR MESSAGES USING THE PHYSICAL PARTITION! STICKING TO JUSRT SNOWY! 20191112
 #             else
 #               VAR_partition=snowy
 #             fi
@@ -68,6 +68,10 @@ VAR_nPools=5                                                    ### number of po
 VAR_maxlib=500                                                  ### maximum number of genotyping libraries
 VAR_account=punim0543                                           ### Spartan account name
 VAR_reqmem=$(echo "${VAR_nLoci} * ${VAR_indiv} / 1000000" | bc) ### estimated RAM requirement in gigabytes per parallel job during parsing, summary statistics including PC and K estimations and GPAS CV
+if [ ${VAR_reqmem} -eq 0 ]
+then
+  VAR_reqmem=2
+fi
 VAR_timelim="5-0:0:00"                                          ### maximum computing time limit in days-hours:minutes:seconds
 if [ $VAR_partition == cloud ]
 then
@@ -190,6 +194,7 @@ time ./\${temp_SCRIPT} \
       \$selection \
       \$bg_selection \
       \$GRADIENT
+rm \${temp_SCRIPT}
 
 echo '#######################################################'
 echo 'PARSE'
@@ -211,6 +216,7 @@ time ./\${temp_SCRIPT} \
       \${GEN_PRED_SRC_DIR} \
       \${INI_FNAME} \
       \${nCores}
+rm \${temp_SCRIPT}
 
 echo '#######################################################'
 echo 'SUMMSTATS'
@@ -236,6 +242,7 @@ time ./\${temp_SCRIPT} \
       \${NPSTAT_DIR} \
       \${N} \
       \${nCores}
+rm \${temp_SCRIPT}
 
 echo '#######################################################'
 echo 'GPAS'
@@ -255,6 +262,7 @@ time ./\${temp_SCRIPT} \
       \${QTL_SPEC_FNAME} \
       \${GEN_PRED_SRC_DIR} \
       \${nCores}
+rm \${temp_SCRIPT}
 
 echo '#######################################################'
 echo 'Clean up'
@@ -269,6 +277,9 @@ mv \${OUTDIR}/*.log \${OUTDIR}/SPECS
 mv \${OUT_SUBDIR}/CROSS_VALIDATION_OUTPUT_MERGED.csv \${OUTDIR}
 tar --remove-files -zcf \${OUTDIR}/SPECS.tar.gz \${OUTDIR}/SPECS
 tar --remove-files -zcf \${OUTDIR}/RAW_DATA.tar.gz \${OUT_SUBDIR}
+echo '#######################################################'
+echo 'FINALLY DONE!'
+echo '#######################################################'
 " >> ${VAR_prefix}_${VAR_rep}rep_${VAR_nQTL}QTL_${VAR_migration}mr_${VAR_foreground_selection}fgs_${VAR_background_selection}bgs_${VAR_gradient}grad.slurm
 
 #########################

@@ -51,6 +51,40 @@ include("pval_heuristic_module.jl")
 # end
 
 ### using ggmix
+"""
+# __________________
+# Linear Mixed Model
+
+`GGMIX(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, alfa::Float64=1.0)`
+
+Solve linear mixed model using the R library [ggmix](https://sahirbhatnagar.com/ggmix/articles/introduction-to-ggmix.html)
+
+# Input
+1. *X*: Design matrix for the fixed effects
+2. *y*: Response variable
+3. *Z*: Design matrix for the random effects
+4. *alfa*: Elastic-net penalty (ranges from 0.0 for rigde regression penalty up to 1.0 for the LASSO penalty)
+
+# Output
+1. Intercept and covariate effect
+2. Allele effects
+
+# Examples
+```
+using Statistics
+n=10; m=100
+X = convert(Array{Float64, 2}, reshape(rand([0,1], n*m), n, m))
+Z = convert(Array{Float64, 2}, reshape(rand(collect(1:r), n^2), n, n))
+y = rand(n)
+GP_module.GGMIX(X=hcat(ones(n), X), y=y, Z=Z, alfa=0.00)
+```
+
+# Note:
+Install ggmix in R via:
+```
+install.packages("pacman")
+pacman::p_load_gh('sahirbhatnagar/ggmix')
+```"""
 function GGMIX(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, alfa::Float64=1.0)
 	@rput X;
 	@rput y;
@@ -81,6 +115,50 @@ end
 ### main function ###
 ###				  ###
 #####################
+"""
+# __________________
+# Genomic prediction
+
+`GP(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARIATE=nothing, MODEL="FIXED_LS")`
+
+Genomic prediction modelling by estimating additive allelic effects
+
+# Input
+1. Design matrix for the fixed effects
+2. Response variable
+3. Minimum allele frequency threshold
+4. *COVARIATE*: Design matrix for the random effects
+5. *MODEL*
+- FIXED_LS - ordinary least squares estimation
+- FIXED_RR - ridge regression using the [glmnet package in R](https://cran.r-project.org/web/packages/glmnet/index.html)
+- FIXED_GLMNET - elastic-net regularization at alpha=0.5 using the glmnet package
+- FIXED_LASSO - least absolute shrinkage and selection operator regression using the glmnet package
+- MIXED_RR - mixed model ridge regression using the R library [ggmix](https://sahirbhatnagar.com/ggmix/articles/introduction-to-ggmix.html)
+- MIXED_GLMNET - mixed model glmnet at alpha=0.5 using the ggmix package
+- MIXED_LASSO - mixed model LASSO using the ggmix package
+- MIXED_LS - mixed model least squares regression using the ggmix package
+- MIXED_EMMAX - [efficient mixed-model association](https://www.ncbi.nlm.nih.gov/pubmed/20208533)
+
+# Output
+1. Indices of loci used (Array{Int64, 1})
+2. Intercept and covariate effects (Array{Float64, 1})
+3. SNP effects (Array{Float64, 1})
+4. p-values (Array{Float64, 1})
+5. -log10(p-values) (Array{Float64, 1})
+
+# Examples
+```
+using Statistics
+n=10; m=100
+X = convert(Array{Float64, 2}, reshape(rand([0,1], n*m), n, m))
+Z = convert(Array{Float64, 2}, reshape(rand(collect(1:n), n^2), n, n))
+y = rand(n)
+LOC, INTCOVAR_EFF, EFF, P_VALUES, LOD = GP_module.GP(X, y, 0.01, COVARIATE=nothing, MODEL="FIXED_LS")
+LOC, INTCOVAR_EFF, EFF, P_VALUES, LOD = GP_module.GP(X, y, 0.01, COVARIATE=Z, MODEL="FIXED_LS")
+LOC, INTCOVAR_EFF, EFF, P_VALUES, LOD = GP_module.GP(X, y, 0.01, COVARIATE=Z, MODEL="FIXED_RR")
+LOC, INTCOVAR_EFF, EFF, P_VALUES, LOD = GP_module.GP(X, y, 0.01, COVARIATE=Z, MODEL="MIXED_LASSO")
+```
+"""
 function GP(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARIATE=nothing, MODEL="FIXED_LS")
 	# ### test
 	# using JLD2

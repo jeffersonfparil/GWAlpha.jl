@@ -15,14 +15,15 @@ nCores=${4}							#total number of parallel jobs
 ########################
 ### SAMPLE EXECUTION ###
 ########################
-# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019
+# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019_TEST
 # rep=1
 # nQTL=10
-# migration=0.001
+# migration=0.00
 # selection=0.25
-# bg_selection=-0.25
-# BASEDIR=${DIR}/Output_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs
-# OUTPREFIX=LOLIUM_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs
+# bg_selection=0.00
+# GRADIENT=0
+# BASEDIR=${DIR}/LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad
+# OUTPREFIX=LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad
 # OUTDIR=${BASEDIR}/${OUTPREFIX}*/
 # QTL_SPEC_FNAME=${BASEDIR}/QTL_SPEC.csv
 # GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src
@@ -116,7 +117,7 @@ done
 echo -e "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#"
 echo -e "OUTPUT MERGING:"
 echo -e "#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@#"
-echo -e "GROUPING,ALGORITHM,POP_TRAIN,POP_TEST,MODEL_ITERATION,MODEL_COVARIATE,MODEL_MODEL,PREDICTORS,NON_ZERO_PREDICTORS,MEAN_DEVIANCE,VAR_DEVIANCE,CORRELATION,INTERCEPT,SLOPE,R2,RMSD,QTL_DETECTED_PERC,QTL_FRAC_EFF,QTL_DETECTED_ID,FALSE_POSITIVE_RATE,QTL_FREQS_TRAINING,QTL_FREQS_VALIDATION" \
+echo -e "GROUPING,ALGORITHM,POP_TRAIN,POP_TEST,MODEL_ITERATION,MODEL_COVARIATE,MODEL_MODEL,PREDICTORS,NON_ZERO_PREDICTORS,MEAN_DEVIANCE,VAR_DEVIANCE,CORRELATION,INTERCEPT,SLOPE,R2,RMSD,TRUE_POSITIVE_RATE,QTL_FRAC_EFF,TRUE_POSITIVE_ID,FALSE_POSITIVE_ID,FALSE_POSITIVE_RATE,QTL_FREQS_TRAINING,QTL_FREQS_VALIDATION" \
   > CROSS_VALIDATION_OUTPUT_MERGED.csv
 ls CROSS_VALIDATION_OUTPUT_*_*.csv > OUT_LIST.temp
 for f in $(cat OUT_LIST.temp)

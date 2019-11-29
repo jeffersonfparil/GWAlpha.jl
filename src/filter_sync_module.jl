@@ -43,6 +43,27 @@ function filter_sync_by_MAF(filename_sync, MAF)
 end
 
 ### UPDATED MAF AND DEPTH FILTERING FUNCTION
+"""
+# ________________________________________
+# Filter synchronized pileup genotype data
+
+`filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)`
+
+Filter a synchronized pileup file to include only sites
+with user defined minimum allele frequency (MAF) and minimum sequencing depth (DEPTH).
+
+# Input
+1. *filename_sync*: [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/)
+2. *MAF*: minimum allele frequency threshold
+3. *DEPTH*: minimum depth threshold (default = 0)
+
+# Output:
+1. filtered sync file with the suffix: `string("_MAF", MAF, "_DEPTH", DEPTH, ".sync")`
+2. indices of sync loci passing the MAF-DEPTH filtering
+
+# Example
+`sync_array = filter_sync(filename_sync="test/test.sync", MAF=0.001, DEPTH=10)`
+"""
 function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 	### load the sync and phenotype files
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
@@ -89,11 +110,3 @@ function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 end
 
 end #end of filter_sync_module
-
-### INPUTS:
-### (1). synchronized mpileup filename
-### (2). minimum allele frequency threshold (MAF)
-### (3). minimum depth threshold
-### OUTPUT:
-### (1) filtered sync file ((_MAF${MAF}_DEPTH${DEPTH}.sync))
-### (2) indices of sync loci passing the MAF-DEPTH filtering

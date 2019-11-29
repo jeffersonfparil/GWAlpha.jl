@@ -20,6 +20,34 @@ function inverse(A::Array{Float64,2})
 end
 
 ### METHOD1: FOR OPTIMIZATION
+"""
+# ________________________________
+# Linear mixed model cost function
+
+`LMM_optim(parameters::Array{Float64,1}, X::Array{Float64,2}, Z::Array{Float64,2}, y::Array{Float64,1}; METHOD="ML")`
+
+Calculates the -log-likelihood of the observed data **y** given the parameters, error variance **σ2e** and  random effects variance **σ2u**.
+Used for solving the mixed model `y = Xβ + Zu + ε` where β are the fixed effects, u are the random effects, and ε are the homoscedatic residual effects.
+
+# METHOD
+- **ML**: maximum likelihood estimation
+- **REML_EMMAX**: restricted maximum likelihood estimation using the EMMAX approach which requires Z to be square
+- **REML_SVD**: restricted maximum likelihood estimation using sigular value decomposition
+
+# Examples
+```
+using Statistics
+n=10; m=100; r=3
+X = convert(Array{Float64, 2}, reshape(rand([0,1], n*m), n, m))
+Z1 = convert(Array{Float64, 2}, reshape(rand(collect(1:r), n*r), n, r))
+Z2 = convert(Array{Float64, 2}, reshape(rand(collect(1:n), n*n), n, n))
+y = rand(n)
+param_test = [1.0, 1.0]
+LMM_module.LMM_optim(param_test, X, Z1, y, METHOD="ML")
+LMM_module.LMM_optim(param_test, X, Z2, y, METHOD="REML_EMMAX")
+LMM_module.LMM_optim(param_test, X, Z1, y, METHOD="REML_SVD")
+```
+"""
 function LMM_optim(parameters::Array{Float64,1}, X::Array{Float64,2}, Z::Array{Float64,2}, y::Array{Float64,1}; METHOD="ML")
 	### y = Xb + Zu + e; where Xb=fixed and Za=random
 	### METHOD = ["ML", "REML_EMMAX", "REML_SVD"]; where "ML" == "REMML_SVD"
@@ -65,6 +93,27 @@ function LMM_optim(parameters::Array{Float64,1}, X::Array{Float64,2}, Z::Array{F
 end
 
 ### METHOD2: FOR FIXEF AND RANEF ESIMATION
+"""
+# _________________________________
+# Estimate fixed and random effects
+
+`LMM_estimate(parameters::Array{Float64,1}, X::Array{Float64,2}, Z::Array{Float64,2}, y::Array{Float64,1}; VARFIXEF=true)`
+
+Estimate the fixed and random effects given the ML- or REML-estimated parameters (error variance **σ2e** and  random effects variance **σ2u**).
+With an optional fixed effects variance estimates (default `VARFIX=true`) for Wald's test.
+
+# EXAMPLES
+```
+using Statistics
+n=10; m=100; r=3
+X = convert(Array{Float64, 2}, reshape(rand([0,1], n*m), n, m))
+Z = convert(Array{Float64}, reshape(rand(collect(1:r), n*r), n, r))
+y = rand(n)
+params = [1.0, 1.0]
+LMM_module.LMM_estimate(params, X, Z, y, VARFIXEF=true)
+LMM_module.LMM_estimate(params, X, Z, y, VARFIXEF=false)
+```
+"""
 function LMM_estimate(parameters::Array{Float64,1}, X::Array{Float64,2}, Z::Array{Float64,2}, y::Array{Float64,1}; VARFIXEF=true)
 	### y = Xb + Zu + e; where Xb=fixed and Za=random
 	### VARFIXEF = [true, false]; calculate variance of fixed effects (for wald's test or not because it is too computationally expensive to calculate the inverse of them huge SNP matrix!!!)

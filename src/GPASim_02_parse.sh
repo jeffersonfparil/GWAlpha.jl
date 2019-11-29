@@ -24,16 +24,16 @@ nAlleles=$(head -n1 $fname_dat | cut -d' ' -f3)
 
 ####################
 ### SAMPLE EXECUTION
-# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019
+# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019_TEST
 # rep=1
-# nGen=500
+# nGen=100
 # nQTL=10
-# migration=0.001
+# migration=0.00
 # selection=0.25
-# bg_selection=-0.25
+# bg_selection=0.00
 # GRADIENT=0
-# OUTPREFIX=LOLIUM_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad
-# OUTDIR=${DIR}/Output_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad/
+# OUTPREFIX=LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad
+# OUTDIR=${DIR}/LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad/
 # fname_dat=${OUTPREFIX}_g${nGen}.dat
 # nPools=5
 # GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src

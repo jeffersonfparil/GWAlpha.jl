@@ -21,23 +21,23 @@ nCores=${10}            #number of cores to use for parallel computations of PC 
 ########################
 ### SAMPLE EXECUTION ###
 ########################
-# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019
+# DIR=/data/Lolium/Quantitative_Genetics/LOLSIM_2019_TEST
 # rep=1
 # nQTL=10
-# migration=0.001
+# migration=0.00
 # selection=0.25
-# bg_selection=-0.25
+# bg_selection=0.00
 # VAR_gradient=0
-# BASEDIR=${DIR}/Output_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${VAR_gradient}grad
-# OUTPREFIX=LOLIUM_${rep}rep_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${VAR_gradient}grad
+# BASEDIR=${DIR}/LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${VAR_gradient}grad
+# OUTPREFIX=LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${VAR_gradient}grad
 # OUTDIR=${BASEDIR}/${OUTPREFIX}*/
 # POP_ID_txt=${OUTDIR}/POP_ID.txt
-# nGen=500
+# nGen=100
 # GENOME_SPEC_FNAME=${BASEDIR}/Lperenne_genome.spec
 # QTL_SPEC_FNAME=${BASEDIR}/QTL_SPEC.csv
 # GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src
 # NPSTAT_DIR=${DIR}/Softwares/npstat
-# N=500
+# N=100
 # nCores=$(echo $(cat /proc/cpuinfo | awk '/^processor/{print $3}' | wc -l) / 2 | bc) #half the number of parallel threads for RAM-intensive PC and K covariate caluculations
 #
 # time \

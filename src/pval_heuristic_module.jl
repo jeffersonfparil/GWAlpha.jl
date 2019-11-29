@@ -25,6 +25,42 @@ using Statistics
 ##############################################
 ### finding the best fitting distributions ###
 ##############################################
+"""
+# ____________________________
+# Effects distribution fitting
+
+`best_fitting_distribution(data::Array{Float64,1})`
+
+Determine the best fitting distribution to model the data and heuristically estimate the p-values.
+
+# Ditributions
+- [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
+- [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
+- [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
+- [Categorical](https://en.wikipedia.org/wiki/Categorical_distribution)
+- [Dicscrete Uniform](https://en.wikipedia.org/wiki/Discrete_uniform_distribution)
+- [Exponential](https://en.wikipedia.org/wiki/Exponential_distribution)
+- [Gaussian](https://en.wikipedia.org/wiki/Normal_distribution)
+- [Gamma](https://en.wikipedia.org/wiki/Gamma_distribution)
+- [Geometric](https://en.wikipedia.org/wiki/Geometric_distribution)
+- [Laplace](https://en.wikipedia.org/wiki/Laplace_distribution)
+- [Pareto](https://en.wikipedia.org/wiki/Pareto_distribution)
+- [Poisson](https://en.wikipedia.org/wiki/Poisson_distribution)
+- [Inverse Gaussian or Wald](https://en.wikipedia.org/wiki/Inverse_Gaussian_distribution)
+- [Uniform](https://en.wikipedia.org/wiki/Uniform_distribution_(continuous))
+
+# Examples
+```
+using Distributions
+using UnicodePlots
+x1 = Distributions.rand(Distributions.Normal(0, 1), 100)
+histogram(x1)
+pval_heuristic_module.best_fitting_distribution(x1)
+x2 = Distributions.rand(Distributions.Laplace(0, 1), 100)
+histogram(x2)
+pval_heuristic_module.best_fitting_distribution(x2)
+```
+"""
 function best_fitting_distribution(data::Array{Float64,1})
     DIST_NAMES =   [Distributions.Bernoulli, Distributions.Beta, Distributions.Binomial, Distributions.Categorical,
                     Distributions.DiscreteUniform, Distributions.Exponential, Distributions.Normal, Distributions.Gamma,
@@ -47,6 +83,30 @@ end
 ####################################################
 ### estimate p-values and LOD (-log10(p-values)) ###
 ####################################################
+"""
+# ________________________________________________________________________________________
+# Heuristic estimates of p-values and -log10(p-values) using the best-fitting distribution
+
+`estimate_PVAL_and_LOD(data)`
+
+# Output
+1. p-values
+2. -log10(p-values)
+
+# Examples
+```
+using Distributions
+using UnicodePlots
+x1 = Distributions.rand(Distributions.Normal(0, 1), 100)
+histogram(x1)
+PVAL, LOD = pval_heuristic_module.estimate_PVAL_and_LOD(x1)
+scatterplot(LOD)
+x2 = Distributions.rand(Distributions.Laplace(0, 1), 100)
+histogram(x2)
+PVAL, LOD = pval_heuristic_module.estimate_PVAL_and_LOD(x2)
+scatterplot(LOD)
+```
+"""
 function estimate_PVAL_and_LOD(data)
     D = best_fitting_distribution(data)
     if (D == nothing) | (std(data) == 0)

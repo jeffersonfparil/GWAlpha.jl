@@ -38,6 +38,47 @@ include("LMM_module.jl")
 ### main function ###
 ###				  ###
 #####################
+"""
+# _______________________
+# Genome-wide association
+
+`GWAS(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARIATE=nothing, MODEL_TYPE="FIXED_LS", TEST="LRT")`
+
+Iterative estimation of genome-wide alelle effects to infer putative quantitative trait loci.
+
+# Input
+1. Design matrix of fixed factors (SNPs matrix with *n* rows and *m* columns; where there are *n* individuals and *m* loci)
+2. Phenotype data
+3. Minimum allele frequency threshold for filtering the SNP data
+4. *COVARIATE*: array of covariate/s to use (default=nothing)
+5. *MODEL_TYPE*
+- FIXED_LS - ordinary least squares estimation
+- MIXED_ML - maximum likelihood estimation
+- MIXED_FAST - the same maximum likelihood estimate used across all loci
+- MIXED_EMMAX - [efficient mixed-model association](https://www.ncbi.nlm.nih.gov/pubmed/20208533)
+6. *TEST*
+- LRT: likelihood ratio test
+- WALD: Wald's Chi-square test
+
+# Output
+1. Indices of loci used (Array{Int64, 1})
+2. Intercept and covariate effects (Array{Float64, 1})
+3. SNP effects (Array{Float64, 1})
+4. p-values (Array{Float64, 1})
+5. -log10(p-values) (Array{Float64, 1})
+
+# Examples
+```
+using Statistics
+n=10; m=100
+X = convert(Array{Float64, 2}, reshape(rand([0,1], n*m), n, m))
+Z = convert(Array{Float64, 2}, reshape(rand(collect(1:n), n^2), n, n))
+y = rand(n)
+LOC, INTCOVAR, EFF, PVAL, LOD = GWAS_module.GWAS(X, y, 0.01, COVARIATE=nothing, MODEL_TYPE="FIXED_LS", TEST="LRT")
+LOC, INTCOVAR, EFF, PVAL, LOD = GWAS_module.GWAS(X, y, 0.01, COVARIATE=Z, MODEL_TYPE="MIXED_FAST", TEST="LRT")
+LOC, INTCOVAR, EFF, PVAL, LOD = GWAS_module.GWAS(X, y, 0.01, COVARIATE=Z, MODEL_TYPE="MIXED_EMMAX", TEST="LRT")
+```
+"""
 function GWAS(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARIATE=nothing, MODEL_TYPE="FIXED_LS", TEST="LRT")
 	### MODEL_TYPE = ["FIXED_LS", "MIXED_ML", "MIXED_FAST", "MIXED_EMMAX", "MIXED_SVD"]
 	### TEST = ["LRT", "WALD"]
@@ -86,7 +127,7 @@ function GWAS(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARI
 		upper_limits = [1.0e+10, 1.0e+10]
 		initial_values = [1.0, 1.0]
 		# σ2e, σ2u = Optim.optimize(pars->LMM_module.LMM(pars, ones(length(y)), Z, y; OPTIMIZE=true, METHOD="REML_SVD"), lower_limits, upper_limits, initial_values).minimizer
-		σ2e, σ2u = Optim.optimize(pars->LMM_module.LMM_optim(pars, ones(length(y)), Z, y; METHOD="REML_SVD"), lower_limits, upper_limits, initial_values).minimizer
+		σ2e, σ2u = Optim.optimize(pars->LMM_module.LMM_optim(pars, reshape(ones(length(y)), length(y),1), Z, y; METHOD="REML_SVD"), lower_limits, upper_limits, initial_values).minimizer
 		U, S, Vt = LinearAlgebra.svd(Z)
 		# Vs = sqrt.(1 ./ (S .+ (σ2e/(σ2e+σ2u))))
 		# X_rotated = (U' * X) .* reshape(repeat(Vs, outer=size(X, 2)), size(X))
@@ -135,15 +176,15 @@ function GWAS(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARI
 			upper_limits = [1.0e+10, 1.0e+10]
 			initial_values = [0.1, 0.1]
 			# var_e, var_u = Optim.optimize(parameters->LMM_module.LMM(parameters, X, Z, y; OPTIMIZE=true, METHOD="ML"), lower_limits, upper_limits, initial_values).minimizer
-			var_e, var_u = Optim.optimize(parameters->LMM_module.LMM_optim(parameters, X, Z, y; METHOD="ML"), lower_limits, upper_limits, initial_values).minimizer
+			var_e, var_u = Optim.optimize(parameters->LMM_module.LMM_optim(parameters, X, Z, y, METHOD="ML"), lower_limits, upper_limits, initial_values).minimizer
 			# fixef, ranef, var_fixef = LMM_module.LMM([var_e, var_u], X, Z, y; OPTIMIZE=false)
-			fixef, ranef, var_fixef = LMM_module.LMM_estimate([var_e, var_u], X, Z, y; VARFIXEF=true)
+			fixef, ranef, var_fixef = LMM_module.LMM_estimate([var_e, var_u], X, Z, y, VARFIXEF=true)
 			if TEST == "LRT"
 				### likelihood ratio test
 				# L_null = exp(-LMM_module.LMM([var_e, var_u], X[:,1], Z, y; OPTIMIZE=true, METHOD="ML"))
-				L_null = exp(-LMM_module.LMM_optim([var_e, var_u], X[:,1], Z, y; METHOD="ML"))
+				L_null = exp(-LMM_module.LMM_optim([var_e, var_u], reshape(X[:,1], length(X[:,1]), 1), Z, y, METHOD="ML"))
 				# L_SNP = exp(-LMM_module.LMM([var_e, var_u], X, Z, y; OPTIMIZE=true, METHOD="ML"))
-				L_SNP = exp(-LMM_module.LMM_optim([var_e, var_u], X, Z, y; METHOD="ML"))
+				L_SNP = exp(-LMM_module.LMM_optim([var_e, var_u], X, Z, y, METHOD="ML"))
 				likelihood_ratio_test_statistic = 2*log(L_SNP / L_null)
 				p_val = 1.0 - Distributions.cdf(Distributions.Chisq(1), likelihood_ratio_test_statistic)
 			elseif TEST =="WALD"
@@ -169,13 +210,13 @@ function GWAS(X_raw::Array{Float64,2}, y::Array{Float64,1}, MAF::Float64; COVARI
 			Z = x[:, 2:(end-1)]	#random
 			n = size(X, 1)
 			# fixef, ranef, var_fixef = LMM_module.LMM([var_e, var_u], X, Z, y; OPTIMIZE=false)
-			fixef, ranef, var_fixef = LMM_module.LMM_estimate([var_e, var_u], X, Z, y; VARFIXEF=true)
+			fixef, ranef, var_fixef = LMM_module.LMM_estimate([var_e, var_u], X, Z, y, VARFIXEF=true)
 			if TEST == "LRT"
 				### likelihood ratio test
 				# L_null = exp(-LMM_module.LMM([var_e, var_u], X[:,1], Z, y; OPTIMIZE=true, METHOD="ML"))
-				L_null = exp(-LMM_module.LMM_optim([var_e, var_u], X[:,1], Z, y; METHOD="ML"))
+				L_null = exp(-LMM_module.LMM_optim([var_e, var_u], reshape(X[:,1], length(X[:,1]), 1), Z, y, METHOD="ML"))
 				# L_SNP = exp(-LMM_module.LMM([var_e, var_u], X, Z, y; OPTIMIZE=true, METHOD="ML"))
-				L_SNP = exp(-LMM_module.LMM_optim([var_e, var_u], X, Z, y; METHOD="ML"))
+				L_SNP = exp(-LMM_module.LMM_optim([var_e, var_u], X, Z, y, METHOD="ML"))
 				likelihood_ratio_test_statistic = 2*log(L_SNP / L_null)
 				p_val = 1.0 - Distributions.cdf(Distributions.Chisq(1), likelihood_ratio_test_statistic)
 			elseif TEST =="WALD"

@@ -152,6 +152,33 @@ end
 #########################
 ### ACROSS ALL POOOLS ###
 #########################
+"""
+# ___________________________________________________________________
+# Fixation index (Fst) estimation from Pool-seq data across all pools
+
+`Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
+
+Compute **across pools Fst** using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
+or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf)
+
+# Input
+1. *sync_fname*: synchronized pileup filename
+2. *window_size*: size of non-overlapping sliding window in base-pairs
+3. *pool-sizes*: array of pool sizes corresponding to each genotype column in the sync file
+4. *METHOD*: Fst calculation method to use:
+- "WeirCock"
+- "Hivert"
+
+# Output
+1. Fst estimates per window with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")`
+2. Mean Fst estimate with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")`
+
+# Examples
+```
+Fst_across_pools(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+Fst_across_pools(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
+```
+"""
 function Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)
     println("#################################################################################################")
     println("Fst estimation across pools:")
@@ -192,6 +219,32 @@ end
 ###################################
 ### PAIRWISE FST: PER POOL PAIR ###
 ###################################
+"""
+# _______________________________________________________________
+# Pairwise estimation of fixation indices (Fst)from Pool-seq data
+
+`Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
+
+Compute **pairwise Fst** using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
+or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf)
+
+# Input
+1. *sync_fname*: synchronized pileup filename
+2. *window_size*: size of non-overlapping sliding window in base-pairs
+3. *pool-sizes*: array of pool sizes corresponding to each genotype column in the sync file
+4. *METHOD*: Fst calculation method to use:
+- "WeirCock"
+- "Hivert"
+
+# Output
+Pairwise Fst estimates with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")`
+
+# Examples
+```
+Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
+```
+"""
 function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)
     println("#################################################################################################")
     println("Pairwise Fst estimation:")

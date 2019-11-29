@@ -24,23 +24,25 @@ GRADIENT=${16}              # gradient of QTL (foregrund and background selectio
 
 ####################
 ### SAMPLE EXECUTION
-# OUTDIR=/data/Lolium/Quantitative_Genetics/TEST_LANDSCAPING                      # existing output directory to dump all the output files and folder
 # DIR=/data/Lolium
 # QUANTINEMO_DIR=${DIR}/Softwares/quantinemo_linux                                # location of the quantinemo executable
 # GEN_PRED_SRC_DIR=${DIR}/Softwares/genomic_prediction/src                        # full path to the genomic_prediction/src directory
+# rep=1
 # nIndividuals=1000                                                               # number of individuals to simulate
 # nLoci=1000                                                                      # number of loci to simulate (neutral + QTL)
 # nQTL=10                                                                         # number of QTL among the all the loci simulated
 # nBGS=100                                                                        # number of background selection loci (should be highly polygenic >= 100)
 # nAlleles=5                                                                      # number of alleles per loci, e.g. 5 for A,T,C,G, and DEL
 # allele_eff_model=CHISQ                                                          # probability distribution to sample the allele effects from (i.e. CHISQ, NORM, & UNIF)
-# nGen=500                                                                        # number of generations to simulate
+# nGen=100                                                                        # number of generations to simulate
 # nPop=16                                                                         # number of populations/subpopulations to simulate (NOTE: must have a natural number square-root)
 # migration=0.00                                                                  # migration rate across the populations (surrently using the 1D stepping stone model see line 117)
 # selection=0.25                                                                  # selection intensity (trait of interest) defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
 # bg_selection=0.00                                                               # background selection intensity defined as the slope of the directional selection logistic curve (Richards, 1959): ranges from -Inf (select for low phen) to +Inf (select for high phen)
 # GRADIENT=0                                                                      # uniformly distributed non-wildtype alleles
-# OUTPREFIX=LOLSIM_${nQTL}QTL_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
+# OUTPREFIX=LOLSIM_${rep}rep_${nQTL}qtl_${migration}mr_${selection}fgs_${bg_selection}bgs_${GRADIENT}grad   # prefix for the quantiNemo2 initiation (*.ini) file and the output folder
+# OUTDIR=${DIR}/Quantitative_Genetics/LOLSIM_2019_TEST/${OUTPREFIX}               # existing output directory to dump all the output files and folder
+# mkdir ${OUTDIR}
 #
 # time \
 # ${GEN_PRED_SRC_DIR}/GPASim_01_simulate.sh \

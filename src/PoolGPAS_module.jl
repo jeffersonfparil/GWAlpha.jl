@@ -97,7 +97,7 @@ function GWAlpha_ML(filename_sync::String, filename_phen_py::String, MAF::Float6
 		println("Remove leading and intervening whitespaces in the phenotype file.")
 		exit()
 	else
-		n_pools_sync = nothing #clear out contents of this redundun n_pools variable
+		n_pools_sync = nothing #clear out contents of this redundant n_pools variable
 	end
 
 	### iterate across SNPs
@@ -201,7 +201,11 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 	geno = try
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
 	catch
-		rm(string(split(filename_sync, ".")[end-1], "_ALLELEFREQ.csv"))
+		try
+			rm(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv"))
+		catch
+			println(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv: does not exist!"))
+		end
 		sync_parsing_module.sync_parse(filename_sync); #output will be string(split(filename_sync, ".")[1], "_ALLELEFREQ.csv")
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
 		#FORMAT: CHROM,POS,REF,ALLELE,ALLELE_FREQ_POOL1,ALLELE_FREQ_POOL2,...ALLELE_FREQ_POOLN
@@ -231,7 +235,7 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 		#####################
 		### Least Squares ###
 		#####################
-		b = X' * LMM_module.inverse(X * X')  * y
+		b = convert(Array{Float64,1}, X' * LMM_module.inverse(X * X')  * y)
 	elseif MODEL == "FIXED_RR"
 		########################
 		### Ridge regression ###
@@ -394,6 +398,65 @@ end
 ### EXECUTIVE FUNCTION ###
 ###					   ###
 ##########################
+"""
+# __________________________________________________________________
+# Genomic prediction and genome-wide association using Pool-seq data
+
+`PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)`
+
+Build genomic prediction models and perform genome-wide association (GPAS) on quantitative traits by inferring additive genetic effects
+using Pool sequencing (Pool-seq) data.
+
+# Input
+1. [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/)
+2. phenotype data filename
+- **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
+```
+	Pheno_name='Phenotype Name';
+	sig=0.06724693662723039;		# standard deviation
+	MIN=0.0;						# minimum phenotype value
+	MAX=0.424591738712776;			# maximum phenotype value
+	perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
+	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
+```
+- **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
+```
+	200.0,0.11988952929875112
+	200.0,0.18030259365994225
+	200.0,0.21548030739673382
+	200.0,0.24966378482228616
+	200.0,0.31328530259365983
+```
+3. minimum allele freqeuncy threshold
+4. minimum sequencing depth threshold
+5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
+- FIXED_GWAlpha
+- FIXED_LS
+- FIXED_RR (alpha=0.0)
+- FIXED_GLMNET (alpha=0.5)
+- FIXED_LASSO (alpha=1.0)
+- MIXED_RR (alpha=0.0)
+- MIXED_GLMNET (alpha=0.5)
+- MIXED_LASSO (alpha=1.0)
+6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
+
+# Output
+1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
+2. Array of covariate effects
+3. Additive allele effects csv file: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))`
+4. Manhattan plot png format: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
+
+# Examples
+```
+filename_sync = "test/test.sync"
+filename_phen_py = "test/test.py"
+filename_phen_csv = "test/test.csv"
+MAF = 0.01
+DEPTH = 10
+@time OUT = GWAlpha_ML(filename_sync, filename_phen_py, MAF);
+@time OUT = GWAlpha_GP(filename_sync, filename_phen_csv, MAF, DEPTH, MODEL="FIXED_LS", COVARIATE=nothing);
+```
+"""
 function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)
 	# ################################
 	# ### TESTS:

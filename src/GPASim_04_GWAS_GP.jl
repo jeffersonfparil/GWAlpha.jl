@@ -279,8 +279,9 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 	R2 = []
 	RMSD = []
 	QTL_DETECTED_ID = []
-	QTL_DETECTED_PERC = []
+	TRUE_POSITIVE_RATE = []
 	QTL_FRAC_EFF = []
+	FALSE_POSITIVE_ID = []
 	FALSE_POSITIVE_RATE = []
 	QTL_FREQS_TRAINING = []
 	QTL_FREQS_VALIDATION = []
@@ -426,13 +427,17 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 				### Power to detect QTL ### NOTE: NEED TO TRANSFORM MIXED MODEL LOD SCORES TO BONFERRONI-THESHOLDA-ABLE!!! 20190912
 				PUTATIVE_QTL, QTL_DETECTED_CHROM, QTL_DETECTED_POS, QTL_DETECTED_FREF, qtl_detected_id = QTL_detection_power_func(TRAINING_OUT[i], id_merge, QTL_SPEC, LD_kb, pval_adj_method, alpha)
 				push!(QTL_DETECTED_ID, join(qtl_detected_id, ';'))	#list of QTL chrom_position separated by ';'
-				push!(QTL_DETECTED_PERC, length(qtl_detected_id) / size(QTL_SPEC)[1])
+				push!(TRUE_POSITIVE_RATE, length(qtl_detected_id) / size(QTL_SPEC)[1])
 				if length(qtl_detected_id) > 0
 					push!(QTL_FRAC_EFF, sum(QTL_DETECTED_FREF) / length(qtl_detected_id))
 				else
 					push!(QTL_FRAC_EFF, 0.0)
 				end
-				push!(FALSE_POSITIVE_RATE, (size(PUTATIVE_QTL, 1) - length(QTL_DETECTED_CHROM)) / size(PUTATIVE_QTL, 1))
+				false_positive_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
+				false_positive_id = false_positive_id_temp[.!ismissing.(false_positive_id_temp)]
+				false_positive_id_temp = 0
+				push!(FALSE_POSITIVE_ID, join(false_positive_id, ';'))	#list of QTL chrom_position separated by ';'
+				push!(FALSE_POSITIVE_RATE, length(false_positive_id)/(length(false_positive_id)+length(qtl_detected_id)))
 				push!(QTL_FREQS_TRAINING, join(QTL_FREQS_train, ';'))
 				push!(QTL_FREQS_VALIDATION, join(QTL_FREQS_test, ';'))
 				### update progress bar
@@ -444,7 +449,7 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 	println("Summarising output.")
 	OUT = DataFrames.DataFrame( POP_TRAIN=POP_TRAIN, POP_TEST=POP_TEST, MODEL_ITERATION=MODEL_ITERATION, MODEL_COVARIATE=MODEL_COVARIATE, MODEL_MODEL=MODEL_MODEL,
 								PREDICTORS=PREDICTORS, NON_ZERO_PREDICTORS=NON_ZERO_PREDICTORS, MEAN_DEVIANCE=MEAN_DEVIANCE, VAR_DEVIANCE=VAR_DEVIANCE, CORRELATION=CORRELATION, INTERCEPT=INTERCEPT, SLOPE=SLOPE, R2=R2, RMSD=RMSD,
-								QTL_DETECTED_PERC=QTL_DETECTED_PERC, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
+								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_ID=FALSE_POSITIVE_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
 	return(OUT)
 end
 
@@ -466,8 +471,9 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 	R2 = []
 	RMSD = []
 	QTL_DETECTED_ID = []
-	QTL_DETECTED_PERC = []
+	TRUE_POSITIVE_RATE = []
 	QTL_FRAC_EFF = []
+	FALSE_POSITIVE_ID = []
 	FALSE_POSITIVE_RATE = []
 	QTL_FREQS_TRAINING = []
 	QTL_FREQS_VALIDATION = []
@@ -525,7 +531,9 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 			fmixedmodel_group = string(split(model, '_')[3], "_", split(model, '_')[4])
 			if fmixedmodel_group == "FIXED_GWAlpha"
 				OUT, COVAR_EFF = PoolGPAS_module.PoolGPAS(fname_geno_sync_train, fname_pheno_py_train, MAF, 1; MODEL=fmixedmodel_group, COVARIATE=COVARIATE_train)
-				LOCI = OUT.LOCUS_ID
+				# LOCI = OUT.LOCUS_ID
+				### trying to fix LOCUS_ID to reflect continuous numbering across loci and alleles
+				LOCI = (OUT.LOCUS_ID .* 6) .- [if x=="A" 5; elseif x=="T" 4; elseif x=="C" 3; elseif x=="G" 2; elseif x=="N" 1; else 0; end for x in OUT.ALLELE ]
 				INTCOVAR_EFF = nothing
 				EFF = OUT.ALPHA
 				PVAL = OUT.PVALUES
@@ -626,13 +634,17 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 				### Power to detect QTL ### NOTE: NEED TO TRANSFORM MIXED MODEL LOD SCORES TO BONFERRONI-THESHOLDA-ABLE!!! 20190912
 				PUTATIVE_QTL, QTL_DETECTED_CHROM, QTL_DETECTED_POS, QTL_DETECTED_FREF, qtl_detected_id = QTL_detection_power_func(TRAINING_OUT[i], id_merge, QTL_SPEC, LD_kb, pval_adj_method, alpha)
 				push!(QTL_DETECTED_ID, join(qtl_detected_id, ';'))	#list of QTL chrom_position separated by ';'
-				push!(QTL_DETECTED_PERC, length(qtl_detected_id) / size(QTL_SPEC)[1])
+				push!(TRUE_POSITIVE_RATE, length(qtl_detected_id) / size(QTL_SPEC)[1])
 				if length(qtl_detected_id) > 0
 					push!(QTL_FRAC_EFF, sum(QTL_DETECTED_FREF) / length(qtl_detected_id))
 				else
 					push!(QTL_FRAC_EFF, 0.0)
 				end
-				push!(FALSE_POSITIVE_RATE, (size(PUTATIVE_QTL, 1) - length(QTL_DETECTED_CHROM)) / size(PUTATIVE_QTL, 1))
+				false_positive_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
+				false_positive_id = false_positive_id_temp[.!ismissing.(false_positive_id_temp)]
+				false_positive_id_temp = 0
+				push!(FALSE_POSITIVE_ID, join(false_positive_id, ';'))	#list of QTL chrom_position separated by ';'
+				push!(FALSE_POSITIVE_RATE, length(false_positive_id)/(length(false_positive_id)+length(qtl_detected_id)))
 				push!(QTL_FREQS_TRAINING, join(QTL_FREQS_train, ';'))
 				push!(QTL_FREQS_VALIDATION, join(QTL_FREQS_test, ';'))
 				### update progress bar
@@ -644,7 +656,7 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 	println("Summarising output.")
 	OUT = DataFrames.DataFrame( POP_TRAIN=POP_TRAIN, POP_TEST=POP_TEST, MODEL_ITERATION=MODEL_ITERATION, MODEL_COVARIATE=MODEL_COVARIATE, MODEL_MODEL=MODEL_MODEL,
 								PREDICTORS=PREDICTORS, NON_ZERO_PREDICTORS=NON_ZERO_PREDICTORS, MEAN_DEVIANCE=MEAN_DEVIANCE, VAR_DEVIANCE=VAR_DEVIANCE, CORRELATION=CORRELATION, INTERCEPT=INTERCEPT, SLOPE=SLOPE, R2=R2, RMSD=RMSD,
-								QTL_DETECTED_PERC=QTL_DETECTED_PERC, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
+								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_ID=FALSE_POSITIVE_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
 	return(OUT)
 end
 

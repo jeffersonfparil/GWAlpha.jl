@@ -20,7 +20,27 @@ using CSV
 ###				  ###
 ### main function ###
 ###				  ###
-##################### #input is the genotype sync filename
+#####################
+"""
+# ___________________________________________________________
+# Parse synchronize pileup file into an allele frequency file
+
+`sync_parse(filename_sync::String)`
+
+Parse the synchronized pileup file line by line and appends the output into the output file.
+
+# Output
+Allele frequency csv file with the filname: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
+
+# Example
+```
+sync_parsing_module.sync_parse("test/test.sync")
+```
+
+# Note
+Make sure the output file does not exist before executing this function.
+**This function appends into the existing output file** with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
+"""
 function sync_parse(filename_sync::String)
 	### load the sync file
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
