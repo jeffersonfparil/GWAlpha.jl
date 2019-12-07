@@ -68,9 +68,14 @@ Pkg.test("GWAlpha")
 4. Manhattan plot png format: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
 
 ## More details
+
+Open julia, load the GWAlpha library,
 ```
 using GWAlpha
-help(GWAlpha.PoolGPAS)
+```
+then enter the **help mode** by entering the question mark symbol in julia REPL and find more information by entering:
+```
+GWAlpha.PoolGPAS
 ```
 
 ## Contents
