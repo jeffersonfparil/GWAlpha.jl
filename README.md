@@ -1,7 +1,7 @@
 # GWAlpha.jl
 
-|**Lab Webiste**|**Build Status**|**Documentation**|
-|:----:|:----:|:----:|
+|                                                          **Lab Webiste**                                                          |                                                            **Build Status**                                                             |                                                                             **Documentation**                                                                             |
+|:---------------------------------------------------------------------------------------------------------------------------------:|:---------------------------------------------------------------------------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
 | <a href="https://adaptive-evolution.biosciences.unimelb.edu.au/"><img src="misc/Adaptive Evolution Logo mod.png" width="150"></a> | [![Build Status](https://travis-ci.com/jeffersonfparil/GWAlpha.jl.svg?branch=master)](https://travis-ci.com/jeffersonfparil/GWAlpha.jl) | <a href="https://github.com/jeffersonfparil/GWAlpha.jl/wiki" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a> |
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
@@ -24,6 +24,53 @@ Pkg.build()
 using Pkg
 Pkg.update("GWAlpha")
 Pkg.test("GWAlpha")
+```
+
+## Inputs
+
+1. [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/)
+2. phenotype data filename
+- **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
+```
+	Pheno_name='Phenotype Name';
+	sig=0.06724693662723039;		# standard deviation
+	MIN=0.0;						# minimum phenotype value
+	MAX=0.424591738712776;			# maximum phenotype value
+	perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
+	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
+```
+- **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
+```
+	200.0,0.11988952929875112
+	200.0,0.18030259365994225
+	200.0,0.21548030739673382
+	200.0,0.24966378482228616
+	200.0,0.31328530259365983
+```
+3. minimum allele frequency threshold
+4. minimum sequencing depth threshold
+5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
+- FIXED_GWAlpha
+- FIXED_LS
+- FIXED_RR (alpha=0.0)
+- FIXED_GLMNET (alpha=0.5)
+- FIXED_LASSO (alpha=1.0)
+- MIXED_RR (alpha=0.0)
+- MIXED_GLMNET (alpha=0.5)
+- MIXED_LASSO (alpha=1.0)
+6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
+
+## Outputs
+
+1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
+2. Array of covariate effects
+3. Additive allele effects csv file: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))`
+4. Manhattan plot png format: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
+
+## More details
+```
+using GWAlpha
+help(GWAlpha.PoolGPAS)
 ```
 
 ## Contents

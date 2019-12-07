@@ -421,7 +421,7 @@ using Pool sequencing (Pool-seq) data.
 	200.0,0.24966378482228616
 	200.0,0.31328530259365983
 ```
-3. minimum allele freqeuncy threshold
+3. minimum allele frequency threshold
 4. minimum sequencing depth threshold
 5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
 - FIXED_GWAlpha
