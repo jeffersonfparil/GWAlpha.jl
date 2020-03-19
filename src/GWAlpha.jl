@@ -399,7 +399,7 @@ end
 # __________________________________________________________________
 # Genomic prediction and genome-wide association using Pool-seq data
 
-`GWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)`
+`PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)`
 
 Build genomic prediction models and perform genome-wide association (GPAS) on quantitative traits by inferring additive genetic effects
 using Pool sequencing (Pool-seq) data.
@@ -454,7 +454,7 @@ DEPTH = 10
 @time OUT = GWAlpha_GP(filename_sync, filename_phen_csv, MAF, DEPTH, MODEL="FIXED_LS", COVARIATE=nothing);
 ```
 """
-function GWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)
+function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)
 	# ################################
 	# ### TESTS:
 	# filename_sync = "test_1kloci_g1000_p01_POOLS_GENO.sync"
