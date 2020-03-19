@@ -1,5 +1,8 @@
 module GWAlpha
 
+### NOTE:
+### Also known as the PoolGPAS_module.jl in https://gitlab.com/jeffersonfparil/genomic_prediction
+
 #####################
 ### load packages ###
 #####################

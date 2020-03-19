@@ -68,7 +68,13 @@ then
   make || module load GSL/2.5-intel-2018.u4; make
   echo "########################################"
 fi
-# ###### download julia 1.1 if not yet installed
+#### NOTE: Spartan interactive
+# sinteractive --partition=snowy -c 32 --mem=120000 --time=0-8:00:00
+# module load parallel/20181222-spartan_gcc-6.2.0.lua
+# module load Julia/1.1.1-spartan_gcc-6.2.0.lua
+# module load R/3.5.2-GCC-6.2.0
+# module load GSL/2.5-intel-2018.u4
+#### NOTE: download julia 1.1 if not yet installed
 # if [ $(ls ${DIR}/Softwares/julia-1.1.1 | wc -l) -eq 0 ]
 # then
 #   echo "########################################"
@@ -85,6 +91,15 @@ fi
 # R
 # install.packages("pacman")
 # pacman::p_load_gh('sahirbhatnagar/ggmix')
+# install.packages("RColorBrewer")
+# install.packages("abc")
+# install.packages("randomForest")
+# cd ~/R/
+# Rlib=$(ls | tail -n1)
+# cd $Rlib
+# Rver=$(ls | tail -n1)
+# cd $Rver
+# git clone https://github.com/cran/agricolae.git
 ##### NOTE: INSTALL PYTHON'S MATPLOTLIB MANUALLY!!! (FOR julia's PyCall and Plots' plotting)
 # module load Python/2.7.13-GCC-6.2.0-bare
 # pip install matplotlib --user

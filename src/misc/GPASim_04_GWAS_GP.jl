@@ -138,8 +138,8 @@ end
 function asses_model_accuracy_func(y_true, y_pred; PLOT=false, PLOT_ID="")
 	if (var(y_pred) > 1.0e-10)
 		# mean deviation of the predcited from the true phenotypic values
-		MEAN_DEVIANCE = Statistics.mean(abs.(y_true .- y_pred)) #in percentage unit since the units we're using is in percentage eh!
-		VAR_DEVIANCE = var(abs.(y_true .- y_pred)) #in percentage unit since the units we're using is in percentage eh!
+		MEAN_DEVIANCE = Statistics.mean(abs.(y_true .- y_pred)) #in fractional unit since the units we're not  using percentages eh!
+		VAR_DEVIANCE = var(abs.(y_true .- y_pred))
 		# Pearson' product moment correlation
 		CORR = cor(y_true, y_pred)
 		# modeling the true phenotypic values as a function of the predicted values
@@ -154,9 +154,9 @@ function asses_model_accuracy_func(y_true, y_pred; PLOT=false, PLOT_ID="")
 		SLOPE = coef(model)[end,1]
 		R2 = var(GLM.predict(model)) / var(y_true) # not sure if this is correct
 		if PLOT==true
-			Plots.plot([0,100], [0,100], seriestype=:line, color=:gray, xlab="Predicted", ylab="Observed") #1:1 line: perfection
+			Plots.plot([0,1], [0,1], seriestype=:line, color=:gray, xlab="Predicted", ylab="Observed") #1:1 line: perfection
 			Plots.plot!(y_pred, y_true, seriestype=:scatter)
-			newx = convert(Array{Float64}, collect(0:1:100))
+			newx = convert(Array{Float64}, collect(0.00:0.01:1.00))
 			newy = INTERCEPT .+ (SLOPE .* newx)
 			Plots.plot!([0,newx], [0,newy], seriestype=:line)
 			Plots.savefig(string("Genomic_precition_accuracy_scatterplot_", PLOT_ID, ".png"))
@@ -281,8 +281,8 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 	QTL_DETECTED_ID = []
 	TRUE_POSITIVE_RATE = []
 	QTL_FRAC_EFF = []
-	FALSE_POSITIVE_ID = []
-	FALSE_POSITIVE_RATE = []
+	FALSE_DISCOVERY_ID = []
+	FALSE_DISCOVERY_RATE = []
 	QTL_FREQS_TRAINING = []
 	QTL_FREQS_VALIDATION = []
 	### iterate across populations
@@ -433,11 +433,11 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 				else
 					push!(QTL_FRAC_EFF, 0.0)
 				end
-				false_positive_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
-				false_positive_id = false_positive_id_temp[.!ismissing.(false_positive_id_temp)]
-				false_positive_id_temp = 0
-				push!(FALSE_POSITIVE_ID, join(false_positive_id, ';'))	#list of QTL chrom_position separated by ';'
-				push!(FALSE_POSITIVE_RATE, length(false_positive_id)/(length(false_positive_id)+length(qtl_detected_id)))
+				false_discovery_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
+				false_discovery_id = false_discovery_id_temp[.!ismissing.(false_discovery_id_temp)]
+				false_discovery_id_temp = 0
+				push!(FALSE_DISCOVERY_ID, join(false_discovery_id, ';'))	#list of QTL chrom_position separated by ';'
+				push!(FALSE_DISCOVERY_RATE, length(false_discovery_id)/(length(false_discovery_id)+length(qtl_detected_id)))
 				push!(QTL_FREQS_TRAINING, join(QTL_FREQS_train, ';'))
 				push!(QTL_FREQS_VALIDATION, join(QTL_FREQS_test, ';'))
 				### update progress bar
@@ -449,7 +449,7 @@ function CROSSVAL_INDI_func(POP_FNAME_INDI_DF, MODELS_INDI_DF, QTL_SPEC, pval_ad
 	println("Summarising output.")
 	OUT = DataFrames.DataFrame( POP_TRAIN=POP_TRAIN, POP_TEST=POP_TEST, MODEL_ITERATION=MODEL_ITERATION, MODEL_COVARIATE=MODEL_COVARIATE, MODEL_MODEL=MODEL_MODEL,
 								PREDICTORS=PREDICTORS, NON_ZERO_PREDICTORS=NON_ZERO_PREDICTORS, MEAN_DEVIANCE=MEAN_DEVIANCE, VAR_DEVIANCE=VAR_DEVIANCE, CORRELATION=CORRELATION, INTERCEPT=INTERCEPT, SLOPE=SLOPE, R2=R2, RMSD=RMSD,
-								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_ID=FALSE_POSITIVE_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
+								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_DISCOVERY_ID=FALSE_DISCOVERY_ID, FALSE_DISCOVERY_RATE=FALSE_DISCOVERY_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
 	return(OUT)
 end
 
@@ -473,8 +473,8 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 	QTL_DETECTED_ID = []
 	TRUE_POSITIVE_RATE = []
 	QTL_FRAC_EFF = []
-	FALSE_POSITIVE_ID = []
-	FALSE_POSITIVE_RATE = []
+	FALSE_DISCOVERY_ID = []
+	FALSE_DISCOVERY_RATE = []
 	QTL_FREQS_TRAINING = []
 	QTL_FREQS_VALIDATION = []
 	### iterate across populations
@@ -640,11 +640,11 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 				else
 					push!(QTL_FRAC_EFF, 0.0)
 				end
-				false_positive_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
-				false_positive_id = false_positive_id_temp[.!ismissing.(false_positive_id_temp)]
-				false_positive_id_temp = 0
-				push!(FALSE_POSITIVE_ID, join(false_positive_id, ';'))	#list of QTL chrom_position separated by ';'
-				push!(FALSE_POSITIVE_RATE, length(false_positive_id)/(length(false_positive_id)+length(qtl_detected_id)))
+				false_discovery_id_temp = unique([sum(x .== qtl_detected_id)==0 ? x : missing for x in string.(PUTATIVE_QTL.CHROM, ["_"], PUTATIVE_QTL.POS)])
+				false_discovery_id = false_discovery_id_temp[.!ismissing.(false_discovery_id_temp)]
+				false_discovery_id_temp = 0
+				push!(FALSE_DISCOVERY_ID, join(false_discovery_id, ';'))	#list of QTL chrom_position separated by ';'
+				push!(FALSE_DISCOVERY_RATE, length(false_discovery_id)/(length(false_discovery_id)+length(qtl_detected_id)))
 				push!(QTL_FREQS_TRAINING, join(QTL_FREQS_train, ';'))
 				push!(QTL_FREQS_VALIDATION, join(QTL_FREQS_test, ';'))
 				### update progress bar
@@ -656,7 +656,7 @@ function CROSSVAL_POOL_func(POP_FNAME_POOL_DF, MODELS_POOL_DF, QTL_SPEC, pval_ad
 	println("Summarising output.")
 	OUT = DataFrames.DataFrame( POP_TRAIN=POP_TRAIN, POP_TEST=POP_TEST, MODEL_ITERATION=MODEL_ITERATION, MODEL_COVARIATE=MODEL_COVARIATE, MODEL_MODEL=MODEL_MODEL,
 								PREDICTORS=PREDICTORS, NON_ZERO_PREDICTORS=NON_ZERO_PREDICTORS, MEAN_DEVIANCE=MEAN_DEVIANCE, VAR_DEVIANCE=VAR_DEVIANCE, CORRELATION=CORRELATION, INTERCEPT=INTERCEPT, SLOPE=SLOPE, R2=R2, RMSD=RMSD,
-								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_POSITIVE_ID=FALSE_POSITIVE_ID, FALSE_POSITIVE_RATE=FALSE_POSITIVE_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
+								TRUE_POSITIVE_RATE=TRUE_POSITIVE_RATE, QTL_FRAC_EFF=QTL_FRAC_EFF, QTL_DETECTED_ID=QTL_DETECTED_ID, FALSE_DISCOVERY_ID=FALSE_DISCOVERY_ID, FALSE_DISCOVERY_RATE=FALSE_DISCOVERY_RATE, QTL_FREQS_TRAINING=QTL_FREQS_TRAINING, QTL_FREQS_VALIDATION=QTL_FREQS_VALIDATION)
 	return(OUT)
 end
 

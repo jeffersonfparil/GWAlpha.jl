@@ -7,12 +7,12 @@
 # julia -p12
 ### inputs
 DIR = ARGS[1]   ### GPASIM output directory
-nQTL = parse(Int64, ARGS[2]) ### number of QTL
-nREP = parse(Int64, ARGS[3]) ### number of replications
+nREP = parse(Int64, ARGS[2]) ### number of replications
+nLIB = parse(Int64, ARGS[3]) ### number of libraries where one library reference to 1 sequencing experiment with multiple individuals or pools
 # ### TEST:
-# DIR = "/data/Lolium/Quantitative_Genetics/LOLSIM_2019_TEST/LOLSIM_1rep_5qtl_0.001mr_0.25fgs_0.00bgs_0grad"
-# nQTL = 5
-# nREP = 10
+# DIR = pwd()
+# nREP = 100
+# nLIB = 10
 ### load libraries and modules
 using Distributed
 Distributed.addprocs(length(Sys.cpu_info()))
@@ -21,9 +21,9 @@ Distributed.addprocs(length(Sys.cpu_info()))
 @everywhere using CSV
 @everywhere using DelimitedFiles
 @everywhere using Statistics
+@everywhere using StatsBase
 @everywhere using ProgressMeter
 @everywhere using SharedArrays
-using ProgressMeter
 ### set working directory
 cd(DIR)
 ### load the streamlined GPAS cross-validation output
@@ -38,7 +38,7 @@ cd(DIR)
 @everywhere across_indi = []
 @everywhere within_pool = []
 @everywhere within_indi = []
-epsilon = 0.01
+epsilon = Statistics.minimum([1.00/nLIB, 0.05]) ### set maximum possible epsilon to 0.05 to have 0.25 allocation fractions for the null hypothesis
 pb = ProgressMeter.Progress(length(collect(0.0:epsilon:1.0))^4, dt=1, desc="Generating parameter space: ",  barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:yellow); counter=[1]
 for i in collect(0.0:epsilon:1.0)
     for j in collect(0.0:epsilon:1.0)
@@ -58,45 +58,49 @@ end
 @everywhere PAR = DataFrames.DataFrame(ACROSS_POOL=across_pool, ACROSS_INDI=across_indi, WITHIN_POOL=within_pool, WITHIN_INDI=within_indi)
 ### define the sampling_summstats_function
 @everywhere function SAMPLE_ABC(;par::Array{Float64,1}, nLib::Int64=10, nQTL::Int64=nQTL, ACROSS_POOL::DataFrames.DataFrame=ACROSS_POOL, ACROSS_INDI::DataFrames.DataFrame=ACROSS_INDI, WITHIN_POOL::DataFrames.DataFrame=WITHIN_POOL, WITHIN_INDI::DataFrames.DataFrame=WITHIN_INDI)
-  ### test
-  # par = [0.25, 0.25, 0.25, 0.25]
-  # nLib = 10
-  # nQTL = 5
-  ### random sampling and summary statistics i.e CORRELATION, LOG10_RMSD, TRUE_POSITIVE_RATE, and FALSE_POSITIVE_RATE
-  DATA_LEVELS = [ACROSS_POOL, ACROSS_INDI, WITHIN_POOL, WITHIN_INDI]
-  CORRELATION = []
-  LOG10_RMSD = []
-  TRUE_POSITIVE_ID = []
-  FALSE_POSITIVE_ID = []
-  for i in 1:length(DATA_LEVELS)
-    # i = 1
-    LEVEL = DATA_LEVELS[i]
-    n = convert(Int64, round(par[i]*nLib))
-    if (n > 0)
-      idx = rand(collect(1:size(LEVEL,1)), n)
-      # println(idx)
-      push!(CORRELATION, mean(dropmissing(LEVEL[idx,:]).CORRELATION))
-      push!(LOG10_RMSD, mean(dropmissing(LEVEL[idx,:]).LOG10_RMSD))
-      push!(TRUE_POSITIVE_ID, split(join(convert(Array{String}, dropmissing(LEVEL[idx,:]).TRUE_POSITIVE_ID), ";"), ";"))
-      push!(FALSE_POSITIVE_ID, split(join(convert(Array{String}, dropmissing(LEVEL[idx,:]).FALSE_POSITIVE_ID), ";"), ";"))
+    ### test
+    # par = [0.25, 0.25, 0.25, 0.25]
+    # nLib = 10
+    # nQTL = 5
+    ### random sampling and summary statistics i.e CORRELATION, LOG10_RMSD, TRUE_POSITIVE_RATE, and FALSE_DISCOVERY_RATE
+    CORRELATION = []
+    DATA_LEVELS = [ACROSS_POOL, ACROSS_INDI, WITHIN_POOL, WITHIN_INDI]
+    DATA_LEVELS_TRAIN_SETS = [unique(ACROSS_POOL.POP_TRAIN), unique(ACROSS_INDI.POP_TRAIN), unique(WITHIN_POOL.POP_TRAIN), unique(WITHIN_INDI.POP_TRAIN)]
+    LOG10_RMSD = []
+    TRUE_POSITIVE_ID = []
+    FALSE_DISCOVERY_ID = []
+    for i in 1:length(DATA_LEVELS)
+        # i = 1
+        LEVEL = DATA_LEVELS[i]
+        LEVEL_TRAIN_SETS = DATA_LEVELS_TRAIN_SETS[i]
+        n = convert(Int64, round(par[i]*nLib))
+        if (n > 0) & (n <= length(LEVEL_TRAIN_SETS)) ### for when partition is non-zero and the number of training populations is greater than or equal to the required number of libraries
+            idx = StatsBase.randperm(length(LEVEL_TRAIN_SETS))[1:n]
+            pop_train = LEVEL_TRAIN_SETS[idx]
+            subLEVEL = LEVEL[∈(pop_train).(LEVEL.POP_TRAIN) ,:]
+            subLEVEL = subLEVEL[(subLEVEL.TEST_SUB_TRAIN .== 0.0) .& (subLEVEL.POP_TRAIN .!= subLEVEL.POP_TEST), :] ### remove data points with validation populations subsets of the training population - to prevent data leakage!
+            push!(CORRELATION, mean(subLEVEL.CORRELATION[.!isnan.(subLEVEL.CORRELATION) .& .!ismissing.(subLEVEL.CORRELATION)]))
+            push!(LOG10_RMSD, mean(subLEVEL.LOG10_RMSD[.!isnan.(subLEVEL.LOG10_RMSD) .& .!ismissing.(subLEVEL.LOG10_RMSD)]))
+            append!(TRUE_POSITIVE_ID, split(join(convert(Array{String}, subLEVEL.TRUE_POSITIVE_ID[.!ismissing.(subLEVEL.TRUE_POSITIVE_ID)]), ";"), ";"))
+            append!(FALSE_DISCOVERY_ID, split(join(convert(Array{String}, subLEVEL.FALSE_DISCOVERY_ID[.!ismissing.(subLEVEL.FALSE_DISCOVERY_ID)]), ";"), ";"))
+        end
     end
-  end
-  if (sum(isnan.(CORRELATION))>0) | (sum(ismissing.(CORRELATION))>0)
-    SAMPLE_ABC(par=par, nLib=nLib, nQTL=nQTL)
-  else
-    OUT = [mean(CORRELATION[.!isnan.(CORRELATION)]),
-           mean(LOG10_RMSD[.!isnan.(LOG10_RMSD)]),
-           length(unique(TRUE_POSITIVE_ID))/nQTL,
-           length(unique(FALSE_POSITIVE_ID))/(length(unique(TRUE_POSITIVE_ID))+length(unique(FALSE_POSITIVE_ID)))]
+    CORRELATION = CORRELATION[(.!isnan.(CORRELATION)) .& (.!ismissing.(CORRELATION))]
+    LOG10_RMSD = LOG10_RMSD[(.!isnan.(LOG10_RMSD)) .& (.!ismissing.(LOG10_RMSD))]
+    TRUE_POSITIVE_ID = TRUE_POSITIVE_ID[(TRUE_POSITIVE_ID .!= "") .& (.!ismissing.(TRUE_POSITIVE_ID))]
+    FALSE_DISCOVERY_ID = FALSE_DISCOVERY_ID[(FALSE_DISCOVERY_ID .!= "") .& (.!ismissing.(FALSE_DISCOVERY_ID))]
+    OUT = [ mean(CORRELATION),
+            mean(LOG10_RMSD),
+            length(unique(TRUE_POSITIVE_ID))/nQTL,
+            length(unique(FALSE_DISCOVERY_ID))/(length(unique(TRUE_POSITIVE_ID))+length(unique(FALSE_DISCOVERY_ID)))]
     return(OUT)
-  end
 end
 ### parallel computation using @distributed and prefixed with
 ### @sync to wait for the whole parallel computation to finish before runing the next line
 OUT = SharedArrays.SharedArray{Float64,2}(size(PAR,1)*nREP, 4)
 @time x = @sync @distributed for i = 1:size(OUT,1)
   idx_PAR = convert(Int64, i - (floor((i-1)/size(PAR,1))*size(PAR,1)))
-  OUT[i,:] = SAMPLE_ABC(par=convert(Array{Float64,1},PAR[idx_PAR,:]), nLib=10)
+  OUT[i,:] = SAMPLE_ABC(par=convert(Array{Float64,1},PAR[idx_PAR,:]), nLib=nLIB) ### 1 library is composed of multiple individuals or pools
 end
 ### merge the parameters and the corresponding summary statistics from the simulated (sampled) data
 MERGED = DataFrames.DataFrame(REP=repeat(collect(1:nREP), inner=size(PAR,1)),
@@ -107,5 +111,5 @@ MERGED = DataFrames.DataFrame(REP=repeat(collect(1:nREP), inner=size(PAR,1)),
                               CORRELATION=OUT[:,1],
                               LOG10_RMSD=OUT[:,2],
                               TRUE_POSITIVE_RATE=OUT[:,3],
-                              FALSE_POSITIVE_RATE=OUT[:,4])
+                              FALSE_DISCOVERY_RATE=OUT[:,4])
 CSV.write(string("ABC_SAMPLING_OUTPUT_", nREP, "REPS.csv"), MERGED)

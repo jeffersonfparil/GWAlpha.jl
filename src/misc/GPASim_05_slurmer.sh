@@ -54,7 +54,7 @@ VAR_prefix=${9}
 #     done
 #   done
 # done
-# ########################
+# ######################## 20191231: errors starting at bgs -0.25 and grad 1
 
 ########################################
 ### AUXILLARY NON-USER-FACING INPUTS ###
@@ -297,3 +297,5 @@ sbatch ${VAR_prefix}_${VAR_rep}rep_${VAR_nQTL}QTL_${VAR_migration}mr_${VAR_foreg
 # ssh $NODE_ID
 # htop
 # logout
+# ### ONE-LINER:
+# squeue -u jparil; echo RUNNING: $(echo $(squeue -u jparil | grep "R" | wc -l) - 1 | bc); echo PENDING: $(squeue -u jparil | grep -v "R" | wc -l); echo FINISHED: $(grep "FINALLY DONE\!" slurm-* | wc -l); echo ERRORED: $(grep "[Ee]rror" slurm-* | wc -l)
