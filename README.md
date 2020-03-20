@@ -41,20 +41,20 @@ Pkg.test("GWAlpha")
 2. phenotype data filename
 - **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
 ```julia
-	Pheno_name='Phenotype Name';
-	sig=0.06724693662723039;		# standard deviation
-	MIN=0.0;						# minimum phenotype value
-	MAX=0.424591738712776;			# maximum phenotype value
-	perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
-	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
+Pheno_name='Phenotype Name';
+sig=0.06724693662723039;		# standard deviation
+MIN=0.0;						# minimum phenotype value
+MAX=0.424591738712776;			# maximum phenotype value
+perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
+q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
 ```
 - **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
 ```julia
-	200.0,0.11988952929875112
-	200.0,0.18030259365994225
-	200.0,0.21548030739673382
-	200.0,0.24966378482228616
-	200.0,0.31328530259365983
+200.0,0.11988952929875112
+200.0,0.18030259365994225
+200.0,0.21548030739673382
+200.0,0.24966378482228616
+200.0,0.31328530259365983
 ```
 3. minimum allele frequency threshold
 4. minimum sequencing depth threshold
