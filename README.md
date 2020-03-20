@@ -57,18 +57,19 @@ q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentil
 200.0,0.24966378482228616
 200.0,0.31328530259365983
 ```
-3. minimum allele frequency threshold
-4. minimum sequencing depth threshold
+3. *MAF*: minimum allele frequency threshold (default=0.01)
+4. *DEPTH*: minimum sequencing depth threshold (default=10)
 5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
-	- FIXED_GWAlpha
-	- FIXED_LS
-	- FIXED_RR (alpha=0.0)
-	- FIXED_GLMNET (alpha=0.5)
-	- FIXED_LASSO (alpha=1.0)
-	- MIXED_RR (alpha=0.0)
-	- MIXED_GLMNET (alpha=0.5)
-	- MIXED_LASSO (alpha=1.0)
+  - FIXED_GWAlpha
+  - FIXED_LS
+  - FIXED_RR (alpha=0.0)
+  - FIXED_GLMNET (alpha=0.5)
+  - FIXED_LASSO (alpha=1.0)
+  - MIXED_RR (alpha=0.0)
+  - MIXED_GLMNET (alpha=0.5)
+  - MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
+7. *FPR*: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
 
 ## Outputs
 
