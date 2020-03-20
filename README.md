@@ -81,10 +81,7 @@ q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentil
 Open julia, load the GWAlpha library,
 ```julia
 using GWAlpha
-```
-then enter the **help mode** by entering the question mark symbol in julia REPL and find more information by entering:
-```julia
-GWAlpha.PoolGPAS
+?GWAlpha.PoolGPAS
 ```
 
 ## Contents
