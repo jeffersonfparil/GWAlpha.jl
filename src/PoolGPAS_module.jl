@@ -202,9 +202,9 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
 	catch
 		try
-			rm(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv"))
+			rm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"))
 		catch
-			println(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv: does not exist!"))
+			println(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv: does not exist!"))
 		end
 		sync_parsing_module.sync_parse(filename_sync); #output will be string(split(filename_sync, ".")[1], "_ALLELEFREQ.csv")
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
@@ -441,14 +441,14 @@ using Pool sequencing (Pool-seq) data.
 3. *MAF*: minimum allele frequency threshold (default=0.01)
 4. *DEPTH*: minimum sequencing depth threshold (default=10)
 5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
-- FIXED_GWAlpha
-- FIXED_LS
-- FIXED_RR (alpha=0.0)
-- FIXED_GLMNET (alpha=0.5)
-- FIXED_LASSO (alpha=1.0)
-- MIXED_RR (alpha=0.0)
-- MIXED_GLMNET (alpha=0.5)
-- MIXED_LASSO (alpha=1.0)
+	- FIXED_GWAlpha
+	- FIXED_LS
+	- FIXED_RR (alpha=0.0)
+	- FIXED_GLMNET (alpha=0.5)
+	- FIXED_LASSO (alpha=1.0)
+	- MIXED_RR (alpha=0.0)
+	- MIXED_GLMNET (alpha=0.5)
+	- MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
 7. *FPR*: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
 

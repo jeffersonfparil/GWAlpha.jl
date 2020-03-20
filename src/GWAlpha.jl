@@ -199,9 +199,9 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
 	catch
 		try
-			rm(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv"))
+			rm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"))
 		catch
-			println(string(split(filename_sync, ".")[1:(end-1)], "_ALLELEFREQ.csv: does not exist!"))
+			println(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv: does not exist!"))
 		end
 		sync_parsing_module.sync_parse(filename_sync); #output will be string(split(filename_sync, ".")[1], "_ALLELEFREQ.csv")
 		DelimitedFiles.readdlm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), ',')
