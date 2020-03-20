@@ -42,10 +42,10 @@ Pkg.test("GWAlpha")
 - **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
 ```julia
 Pheno_name='Phenotype Name';
-sig=0.06724693662723039;		# standard deviation
-MIN=0.0;						# minimum phenotype value
-MAX=0.424591738712776;			# maximum phenotype value
-perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
+sig=0.06724693662723039;	# standard deviation
+MIN=0.0;			# minimum phenotype value
+MAX=0.424591738712776;		# maximum phenotype value
+perc=[0.2,0.4,0.6,0.8];		# cummulative pool sizes percentiles excluding the last pool
 q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
 ```
 - **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
