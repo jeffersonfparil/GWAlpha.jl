@@ -19,11 +19,7 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
 sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"
 sudo apt-get update -qq -y
 sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y
-sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev python3-pip
-pip3 install --upgrade pip==19.3.1 --user
-pip install setuptools --user
-pip install numpy --user
-pip install matplotlib --user
+Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')"
 ```
 Installation in Julia:
 ```julia

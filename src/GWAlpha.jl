@@ -11,7 +11,7 @@ using Distributions
 using LinearAlgebra
 using Optim
 using GLMNet
-using Plots; Plots.pyplot()
+using RCall
 using ProgressMeter
 using DataFrames
 using CSV
@@ -348,49 +348,57 @@ end
 function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::String, FPR::Float64=0.01)
 	### set missing values to zero
 	OUT.LOD[isnan.(OUT.LOD)] .= 0.0
-	### plot
-	LOD_plot = Plots.plot([0, length(OUT.LOD)], [0, maximum(OUT.LOD[.!isnan.(OUT.LOD) .& .!isinf.(OUT.LOD)])],
-		seriestype=:scatter,
-		marker=(:circle, 5, 0.5, :White, Plots.stroke(0, :white)),
-		xlabel="SNP ID",
-		ylabel="LOD",
-		legend=false,
-		size=(1500, 400),
-		xrotation=00,
-		yrotation=90);
-	contigs = unique(OUT.CHROM)
-	nColours = length(contigs)
-	# idx_remove_yellow = collect(1:9)[collect(1:9) .!= 6]
-	# colours = repeat(ColorBrewer.palette("Pastel1",  nColours < 9 ? nColours : 9)[idx_remove_yellow], outer=convert(Int, ceil(nColours/8)))
-	# colours_lab = repeat(ColorBrewer.palette("Set1", nColours < 9 ? nColours : 9)[idx_remove_yellow], outer=convert(Int, ceil(nColours/8)))
-	# colours = repeat(ColorBrewer.palette("Pastel1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
-	# colours_lab = repeat(ColorBrewer.palette("Set1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
-	colors_paired = ColorBrewer.palette("Paired", 4)
-	colours = repeat(colors_paired[[1,3]], outer=convert(Int, ceil(nColours/2)))
-	colours_lab = repeat(colors_paired[[2,4]], outer=convert(Int, ceil(nColours/2)))
-	i_loc = [0, 0] # counter and locus position
-	for contig in contigs
-		subset_LOD = OUT[OUT.CHROM .== contig, :LOD]
-		x0 = (i_loc[2]+1)
-		x1 = (i_loc[2]+length(subset_LOD))
-		Plots.plot!(LOD_plot, x0:x1, subset_LOD,
-					seriestype=:scatter,
-					marker=(:circle, 5, 0.5, colours[i_loc[1]+1], Plots.stroke(0, :white)));
-		length(contigs) <= 30 ? Plots.annotate!([(x0+((x1-x0)/2), 0, text(contig, 10, colours_lab[i_loc[1]+1], :center))]) : nothing
-		i_loc[1] = i_loc[1]+1
-		i_loc[2] = i_loc[2]+length(subset_LOD)
-	end
-	bonferroni_threshold = -log10(FPR / length(OUT.LOD))
-	Plots.plot!(LOD_plot, [1,length(OUT.LOD)], [bonferroni_threshold, bonferroni_threshold], line=(:line, :dash, 0.5, 2, :red), label="Bonferroni threshold");
-	filename = basename(filename_phe)
-	dirname(filename_phe) == "" ? dir = "" : dir = string(dirname(filename_phe), "/")
-	if endswith(filename, ".py")
-		plot_fname = string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))
-	else
-		plot_fname = string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))
-	end
-	Plots.savefig(plot_fname)
-	return(plot_fname)
+	### plot in R
+	@rput OUT;
+	@rput filename_phe;
+	@rput MODEL;
+	@rput FPR;
+	R"OUT = droplevels(OUT[OUT$CHROM != 'Intercept', ])";
+	R"OUT$LOCUS_ID = as.numeric(unlist(OUT$LOCUS_ID))";
+	R"OUT$CHROM = as.factor(unlist(OUT$CHROM))";
+	R"OUT$POS = as.numeric(unlist(OUT$POS))";
+	R"OUT$ALLELE = as.character(unlist(OUT$ALLELE))";
+	R"OUT$FREQ = as.numeric(unlist(OUT$FREQ))";
+	R"OUT$PVALUES = as.numeric(unlist(OUT$PVALUES))";
+	R"OUT$LOD = as.numeric(unlist(OUT$LOD))";
+	R"fname_split = unlist(strsplit(basename(filename_phe), '[.]'))";
+	R"title = paste(fname_split[1:(length(fname_split)-1)], collapse='[.]')";
+	R"fname_png = paste0(dirname(filename_phe), '/', title, '-', MODEL, '_Manhattan.png')";
+	R"contigs = levels(OUT$CHROM)";
+	R"colours = RColorBrewer::brewer.pal(6, 'Paired')";
+	R"colours_points = rep(colours[c(1,3)], times=ceiling(length(contigs)/2))";
+	R"colours_labels = rep(colours[c(2,4)], times=ceiling(length(contigs)/2))";
+	R"bonferroni_threshold = -log10(FPR/nrow(OUT))";
+	### plot -log10(pvalue) points
+	R"png(fname_png, width=2000, height=800)";
+	R"layout(matrix(c(1,1,1,2), nrow=1, byrow=TRUE))";
+	R"par(cex=1.5)";
+	R"plot(x=OUT$LOCUS_ID, y=OUT$LOD, col=colours_points[as.numeric(OUT$CHROM)], ylim=c(0, max(c(OUT$LOD, bonferroni_threshold))), pch=20, main=paste0(title, '\nBonferroni Threshold at ', round(bonferroni_threshold, 2)), xaxt='n', xlab='Chromosome or Scaffold', ylab=expression(log[10]~(pvalue)), las=1)";
+	R"xaxis_pos = aggregate(OUT$LOCUS_ID ~ OUT$CHROM, FUN=median)";
+	R"mtext(side=1, at=xaxis_pos[,2], text=xaxis_pos[,1], cex=1.5)";
+	R"abline(h=bonferroni_threshold, lty=2, lwd=2, col=colours[5])";
+	R"grid()";
+	# QQ plot (p-values are assumed to be uniformly distributed)
+	# observed_pval = runif(100); observed_pval = observed_pval[order(observed_pval, decreasing=FALSE)] ### TEST
+	# sort the observed p-values
+	R"observed_pval = OUT$PVALUES[order(OUT$PVALUES, decreasing=FALSE)]";
+	# calculate the pdf of the observed p-values, i.e. the probability density for a p-value interval which corresponds to each observed p-value
+	R"observed_pval_density = density(observed_pval, n=length(observed_pval), from=0, to=1) ### calculate the density of the observed p-values between 0 and 1 because we are dealing with p-values which are probabilities!";
+	# calculate the cummulative probabilities of the observed p-values based on the pdf: where Prob(pvalue) = Density(pvalue | pvalue_interval) * pvalue_interval
+	R"observed_pval_cumprob = cumsum(observed_pval_density$y * (observed_pval_density$x[2]-observed_pval_density$x[1]))";
+	# calculate the expected quantiles based on the cummulative probabilities of the observed p-values
+	R"expected_pval = qunif(p=observed_pval_cumprob, min=0, max=1) ### calculate the expected quantiles based on the observed cummulative probabilities";
+	# transform into -log10 scale
+	R"observed_lod = -log10(observed_pval + 1e-200)";
+	R"expected_lod = -log10(expected_pval + 1e-200)";
+	# plot
+	R"plot(x=c(min(observed_lod), max(observed_lod)), y=c(min(observed_lod), max(observed_lod)), type='n', , main='QQ Plot', xlab=expression(Expected~~log[10]~(pvalue)), ylab=expression(Observed~~log[10]~(pvalue)))";
+	R"points(x=expected_lod, y=observed_lod, type='p', pch=20, col=colours[5])";
+	R"lines(x=c(0, max(observed_lod)), y=c(0, max(observed_lod)), lty=2, lwd=2, col='gray')";
+	R"grid()";
+	R"dev.off()";
+	@rget fname_png;
+	return(fname_png)
 end
 
 ##########################
