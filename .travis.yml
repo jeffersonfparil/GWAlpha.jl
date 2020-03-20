@@ -1,10 +1,9 @@
 # Documentation: http://docs.travis-ci.com/user/languages/julia/
-language: 
-  - julia
-  - r
+language: julia
+
 os:
   - linux
-  # - osx
+
 julia:
   - 1
 
@@ -13,23 +12,19 @@ matrix:
   - julia: nightly
 
 addons:
-  apt:
+  - apt:
     packages:
       - at-spi2-core
       - libgtk-3-dev
       - xauth
       - xvfb
+ - r_packages: RColorBrewer
+ - r_github_packages: sahirbhatnagar/ggmix
 
 sudo: required
 
 notifications:
   email: false
-
-r_packages:
-  - RColorBrewer
-
-r_github_packages:
-  - sahirbhatnagar/ggmix
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
