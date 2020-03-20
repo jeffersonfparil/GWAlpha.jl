@@ -15,7 +15,10 @@ A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/geno
 ## Installation
 Install dependencies:
 ```shell
-sudo apt install at-spi2-core libgtk-3-dev xauth xvfb
+sudo apt install python2.7 python3.7 at-spi2-core libgtk-3-dev xauth xvfb
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
+sudo update-alternatives --config python3
+sudo apt install python-pip python3-pip
 pip3 install --upgrade pip==19.3.1 --user
 pip install setuptools --user
 pip install numpy --user
