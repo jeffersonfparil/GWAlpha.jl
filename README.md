@@ -73,8 +73,16 @@ q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentil
 
 1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
 2. Array of covariate effects
-3. Additive allele effects csv file: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))`
-4. Manhattan plot png format: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
+3. Additive allele effects csv file:
+```julia
+string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv"))) ### or...
+string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))
+```
+4. Manhattan plot png format:
+```julia
+string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png"))) ### or...
+string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))
+```
 
 ## More details
 
