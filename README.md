@@ -19,6 +19,7 @@ sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
 sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"
 sudo apt-get update -qq -y
 sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y
+Rscript -e "install.packages('RColorBrewer')"
 Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')"
 ```
 Installation in Julia:
