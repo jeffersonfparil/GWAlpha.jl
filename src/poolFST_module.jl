@@ -145,7 +145,11 @@ function Fst_hivert2018_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64
             end #non-zero window size
         end #window
     end #chrom
-    OUT_Fst = DataFrames.DataFrame(chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+    OUT_Fst = try
+                DataFrames.DataFrame(chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+            catch
+                DataFrames.DataFrame(chr=convert(Array{String},string.(CHROM)), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+            end
     return(OUT_Fst)
 end
 
