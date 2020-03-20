@@ -15,10 +15,12 @@ A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/geno
 ## Installation
 Install dependencies:
 ```shell
-sudo apt install python2.7 python3.7 at-spi2-core libgtk-3-dev xauth xvfb
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.7 2
-sudo update-alternatives --config python3
-sudo apt install python-pip python3-pip
+sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"
+sudo apt-get update -qq -y
+sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y
+sudo apt-get install --allow-unauthenticated python3-setuptools libpng-dev libfreetype6-dev python3-pip
+sudo apt install at-spi2-core libgtk-3-dev xauth xvfb
 pip3 install --upgrade pip==19.3.1 --user
 pip install setuptools --user
 pip install numpy --user
