@@ -30,7 +30,8 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e ".libPaths(new='~/R/x86_64-pc-linux-gnu-library/3.2'); dir.create('~/R/x86_64-pc-linux-gnu-library/3.2', showWarnings = FALSE, recursive = TRUE); chooseCRANmirror(ind=8)"; install.packages('RColorBrewer'); install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')"; fi
 
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - if [[ `uname` = "Linux" ]]; then TESTCMD="xvfb-run julia"; else TESTCMD="julia"; fi
-#  - $TESTCMD -e 'using Pkg; Pkg.build()'
+r_packages:
+  - RColorBrewer
+
+r_github_packages:
+  - sahirbhatnagar/ggmix
