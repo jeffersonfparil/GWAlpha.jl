@@ -59,14 +59,14 @@ q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentil
 3. minimum allele frequency threshold
 4. minimum sequencing depth threshold
 5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
-- FIXED_GWAlpha
-- FIXED_LS
-- FIXED_RR (alpha=0.0)
-- FIXED_GLMNET (alpha=0.5)
-- FIXED_LASSO (alpha=1.0)
-- MIXED_RR (alpha=0.0)
-- MIXED_GLMNET (alpha=0.5)
-- MIXED_LASSO (alpha=1.0)
+	- FIXED_GWAlpha
+	- FIXED_LS
+	- FIXED_RR (alpha=0.0)
+	- FIXED_GLMNET (alpha=0.5)
+	- FIXED_LASSO (alpha=1.0)
+	- MIXED_RR (alpha=0.0)
+	- MIXED_GLMNET (alpha=0.5)
+	- MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
 
 ## Outputs
