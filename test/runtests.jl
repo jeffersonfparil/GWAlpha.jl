@@ -13,8 +13,8 @@ pheno_py_fname = "test.py"
 pheno_csv_fname = "test.csv"
 covariate_fname = "test_COVARIATE_FST.csv"
 
-function runGWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha"::String, COVARIATE=nothing)
-    GWAlpha.PoolGPAS(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
+function runGWAlpha(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64, MODEL::String, COVARIATE::Any, FPR::Float64)
+    GWAlpha.PoolGPAS(filename_sync, filename_phen, MAF=MAF, DEPTH=DEPTH, MODEL=MODEL, COVARIATE=COVARIATE, FPR=FPR)
     return(0)
 end
 
@@ -23,12 +23,13 @@ Test.@test runGWAlpha(geno_sync_fname,
                       pheno_py_fname,
                       0.01,
                       10,
-                      MODEL="FIXED_GWAlpha",
-                      COVARIATE=nothing) == 0
+                      "FIXED_GWAlpha",
+                      nothing,
+                      0.01) == 0
 ### GWAlpha for GP
 Test.@test runGWAlpha(geno_sync_fname,
                       pheno_csv_fname,
                       0.01,
                       10,
-                      MODEL="FIXED_RR",
-                      COVARIATE=DelimitedFiles.readdlm(covariate_fname, ',')) == 0
+                      "FIXED_RR",
+                      DelimitedFiles.readdlm(covariate_fname, ',')) == 0
