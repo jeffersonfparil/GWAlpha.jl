@@ -23,14 +23,13 @@ sudo: required
 notifications:
   email: false
 
+r_github_packages:
+  - sahirbhatnagar/ggmix
+  - cran/RColorBrewer
+
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e "dir.create(path = Sys.getenv("R_LIBS_USER"), showWarnings = FALSE, recursive = TRUE)"; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e "install.packages(RColorBrewer, lib = Sys.getenv("R_LIBS_USER"))"; fi
-
-r_github_packages:
-  - sahirbhatnagar/ggmix
-  - cran/RColorBrewer
+  
