@@ -13,14 +13,23 @@ This repository include a suite of scripts for genomic landscape simulation usin
 A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/genomic_prediction).
 
 ## Installation
+Install dependencies:
+shell```
+sudo apt install at-spi2-core libgtk-3-dev xauth xvfb
+pip3 install --upgrade pip==19.3.1 --user
+pip install setuptools --user
+pip install numpy --user
+pip install matplotlib --user
 ```
+Installation in Julia:
+julia```
 using Pkg
 Pkg.add(PackageSpec(url="https://github.com/jeffersonfparil/GWAlpha.jl.git", rev="master"))
 Pkg.build()
 ```
 
 ## Testing
-```
+julia```
 using Pkg
 Pkg.update("GWAlpha")
 Pkg.test("GWAlpha")
@@ -31,7 +40,7 @@ Pkg.test("GWAlpha")
 1. [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/)
 2. phenotype data filename
 - **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
-```
+julia```
 	Pheno_name='Phenotype Name';
 	sig=0.06724693662723039;		# standard deviation
 	MIN=0.0;						# minimum phenotype value
@@ -40,7 +49,7 @@ Pkg.test("GWAlpha")
 	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
 ```
 - **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
-```
+julia```
 	200.0,0.11988952929875112
 	200.0,0.18030259365994225
 	200.0,0.21548030739673382
@@ -70,11 +79,11 @@ Pkg.test("GWAlpha")
 ## More details
 
 Open julia, load the GWAlpha library,
-```
+julia```
 using GWAlpha
 ```
 then enter the **help mode** by entering the question mark symbol in julia REPL and find more information by entering:
-```
+julia```
 GWAlpha.PoolGPAS
 ```
 

@@ -345,7 +345,7 @@ function write_output(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::St
 	return(alphas_fname)
 end
 
-function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::String)
+function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::String, FPR::Float64=0.01)
 	### set missing values to zero
 	OUT.LOD[isnan.(OUT.LOD)] .= 0.0
 	### plot
@@ -363,8 +363,11 @@ function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::
 	# idx_remove_yellow = collect(1:9)[collect(1:9) .!= 6]
 	# colours = repeat(ColorBrewer.palette("Pastel1",  nColours < 9 ? nColours : 9)[idx_remove_yellow], outer=convert(Int, ceil(nColours/8)))
 	# colours_lab = repeat(ColorBrewer.palette("Set1", nColours < 9 ? nColours : 9)[idx_remove_yellow], outer=convert(Int, ceil(nColours/8)))
-	colours = repeat(ColorBrewer.palette("Pastel1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
-	colours_lab = repeat(ColorBrewer.palette("Set1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
+	# colours = repeat(ColorBrewer.palette("Pastel1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
+	# colours_lab = repeat(ColorBrewer.palette("Set1", 9 > nColours ? nColours : 9), outer=convert(Int, ceil(nColours/9)))
+	colors_paired = ColorBrewer.palette("Paired", 4)
+	colours = repeat(colors_paired[[1,3]], outer=convert(Int, ceil(nColours/2)))
+	colours_lab = repeat(colors_paired[[2,4]], outer=convert(Int, ceil(nColours/2)))
 	i_loc = [0, 0] # counter and locus position
 	for contig in contigs
 		subset_LOD = OUT[OUT.CHROM .== contig, :LOD]
@@ -377,7 +380,7 @@ function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::
 		i_loc[1] = i_loc[1]+1
 		i_loc[2] = i_loc[2]+length(subset_LOD)
 	end
-	bonferroni_threshold = -log10(0.05 / length(OUT.LOD))
+	bonferroni_threshold = -log10(FPR / length(OUT.LOD))
 	Plots.plot!(LOD_plot, [1,length(OUT.LOD)], [bonferroni_threshold, bonferroni_threshold], line=(:line, :dash, 0.5, 2, :red), label="Bonferroni threshold");
 	filename = basename(filename_phe)
 	dirname(filename_phe) == "" ? dir = "" : dir = string(dirname(filename_phe), "/")
@@ -424,8 +427,8 @@ using Pool sequencing (Pool-seq) data.
 	200.0,0.24966378482228616
 	200.0,0.31328530259365983
 ```
-3. minimum allele frequency threshold
-4. minimum sequencing depth threshold
+3. *MAF*: minimum allele frequency threshold (default=0.01)
+4. *DEPTH*: minimum sequencing depth threshold (default=10)
 5. *MODEL*: GPAS model to use (default="FIXED_GWAlpha")
 - FIXED_GWAlpha
 - FIXED_LS
@@ -436,25 +439,29 @@ using Pool sequencing (Pool-seq) data.
 - MIXED_GLMNET (alpha=0.5)
 - MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
+7. *FPR*: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
 
 # Output
 1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
 2. Array of covariate effects
-3. Additive allele effects csv file: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))`
-4. Manhattan plot png format: `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
+3. Additive allele effects file (csv format): `string(dir, replace(filename, ".py" => string("-", MODEL, "_Alphas.csv")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Alphas.csv")))`
+4. Manhattan plot (png format): `string(dir, replace(filename, ".py" => string("-", MODEL, "_Manhattan.png")))` or `string(dir, replace(filename, ".csv" => string("-", MODEL, "_Manhattan.png")))`
 
 # Examples
 ```
+### Genome-wide association study
 filename_sync = "test/test.sync"
 filename_phen_py = "test/test.py"
 filename_phen_csv = "test/test.csv"
-MAF = 0.01
-DEPTH = 10
-@time OUT = GWAlpha_ML(filename_sync, filename_phen_py, MAF);
-@time OUT = GWAlpha_GP(filename_sync, filename_phen_csv, MAF, DEPTH, MODEL="FIXED_LS", COVARIATE=nothing);
+@time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync, filename_phen_py, MAF=0.01, DEPTH=10, MODEL="FIXED_GWAlpha", COVARIATE=nothing, FPR=0.01)
+### Genomic prediction model building
+using DelimitedFiles
+filename_covar_csv= "test/test_COVARIATE_FST.csv"
+COVARIATE = DelimitedFiles.readdlm(filename_covar_csv, ',')
+@time OUT_GP   = GWAlpha.PoolGPAS(filename_sync, filename_phen_csv, MAF=0.01, DEPTH=10, MODEL="FIXED_RR", COVARIATE=COVARIATE)
 ```
 """
-function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DEPTH::Int64; MODEL="FIXED_GWAlpha", COVARIATE=nothing)
+function PoolGPAS(filename_sync::String, filename_phen::String; MAF::Float64=0.01, DEPTH::Int64=10, MODEL::String="FIXED_GWAlpha", COVARIATE::Any=nothing, FPR::Float64=0.01)
 	# ################################
 	# ### TESTS:
 	# filename_sync = "test_1kloci_g1000_p01_POOLS_GENO.sync"
@@ -468,12 +475,22 @@ function PoolGPAS(filename_sync::String, filename_phen::String, MAF::Float64, DE
 		OUT = GWAlpha_ML(filename_sync, filename_phen, MAF)
 		COVAR_EFF = nothing
 	else
-		OUT, COVAR_EFF = GWAlpha_GP(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
+		### Load covariate if presented with a filename
+		if (typeof(COVARIATE)==String)
+			println(string("Please manually load your covariate file: \"", COVARIATE, "\" and use the proper delimiter."))
+			println(string("Example:"))
+			println(string("	using DelimitedFiles"))
+			println(string("	COVARIATE = DelimitedFiles.readdlm(\"", COVARIATE, "\", ',') ### for comma-separated files or..."))
+			println(string("	COVARIATE = DelimitedFiles.readdlm(\"", COVARIATE, "\", '\\t') ### for tab-delimited files"))
+			return("Error!")
+		else
+			OUT, COVAR_EFF = GWAlpha_GP(filename_sync, filename_phen, MAF, DEPTH, MODEL=MODEL, COVARIATE=COVARIATE)
+		end
 	end
 
 	## output and plotting
 	alphas_fname = write_output(OUT, filename_phen, MODEL)
-	plot_fname = plot_manhattan(OUT, filename_phen, MODEL)
+	plot_fname = plot_manhattan(OUT, filename_phen, MODEL, FPR)
 	println("===============================================================")
 	println("Everything went well. Please check the output files:")
 	println(alphas_fname)
