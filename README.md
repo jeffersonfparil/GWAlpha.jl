@@ -13,7 +13,7 @@ This repository include a suite of scripts for genomic landscape simulation usin
 A mirror repository is found in [gitlab](https://gitlab.com/jeffersonfparil/genomic_prediction).
 
 ## Installation
-Install dependencies:
+Install dependencies (see [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml)):
 ```shell
 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
 sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"

@@ -32,4 +32,5 @@ Test.@test runGWAlpha(geno_sync_fname,
                       0.01,
                       10,
                       "FIXED_RR",
-                      DelimitedFiles.readdlm(covariate_fname, ',')) == 0
+                      DelimitedFiles.readdlm(covariate_fname, ','),
+                      0.01) == 0
