@@ -27,6 +27,7 @@ using ColorBrewer
 # using pval_heuristic_module
 include("sync_parsing_module.jl")
 include("filter_sync_module.jl")
+include("poolFST_module.jl")
 include("LMM_module.jl")
 include("GP_module.jl")
 include("pval_heuristic_module.jl")
@@ -463,8 +464,9 @@ filename_phen_py = "test/test.py"
 filename_phen_csv = "test/test.csv"
 @time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync, filename_phen_py, MAF=0.01, DEPTH=10, MODEL="FIXED_GWAlpha", COVARIATE=nothing, FPR=0.01)
 ### Genomic prediction model building
+GWAlpha.poolFST_module.Fst_pairwise(sync_fname=filename_sync, window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+filename_covar_csv= string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")
 using DelimitedFiles
-filename_covar_csv= "test/test_COVARIATE_FST.csv"
 COVARIATE = DelimitedFiles.readdlm(filename_covar_csv, ',')
 @time OUT_GP   = GWAlpha.PoolGPAS(filename_sync, filename_phen_csv, MAF=0.01, DEPTH=10, MODEL="FIXED_RR", COVARIATE=COVARIATE)
 ```
