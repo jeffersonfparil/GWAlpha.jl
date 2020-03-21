@@ -33,4 +33,4 @@ before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then mkdir ~/R_packages_test/; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then echo -e 'R_LIBS=~/R_packages_test/' > ~/.Renviron; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e "install.packages('RColorBrewer')"; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')" || echo "Cannot install ggmix in R"; fi
