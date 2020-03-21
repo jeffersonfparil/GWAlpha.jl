@@ -3,7 +3,8 @@ language: julia
 
 os:
   - linux
-  dist: bionic
+  dist:
+    - bionic
 
 julia:
   - 1
