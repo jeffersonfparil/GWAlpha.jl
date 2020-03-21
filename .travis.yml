@@ -26,7 +26,7 @@ notifications:
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt update -qq -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt install --allow-unauthenticated git r-base=3.5.0$(lsb_release -s -c)0 r-base-dev=3.5.0$(lsb_release -s -c)0 r-recommended=3.5.0$(lsb_release -s -c)0 -y; fi
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then mkdir ~/R_packages_test/; fi
