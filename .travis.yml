@@ -31,5 +31,5 @@ before_install:
   - sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y
   - mkdir ~/R_packages_test/
   - echo -e 'R_LIBS=~/R_packages_test/' > ~/.Renviron
-  - Rscript -e "install.packages('RColorBrewer')"
-  - Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')" || echo "Cannot install ggmix in R"
+  - Rscript -e "install.packages('RColorBrewer', verbose=FALSE)"
+  - Rscript -e "install.packages('remotes', verbose=FALSE); remotes::install_github('sahirbhatnagar/ggmix')"
