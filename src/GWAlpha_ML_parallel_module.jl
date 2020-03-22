@@ -135,8 +135,9 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	### creating an allele counts SharedArray from SYNC to minimize memory usage
 	# COUNTS = zeros(Int64, NPOOLS, 6, size(SYNC)[1])
 	### input shared array
+	println("Converting the sync file into a SharedArray of allele counts...")
 	COUNTS = SharedArrays.SharedArray{Int64,3}(NPOOLS, 6, size(SYNC)[1])
-	for i in 1:NPOOLS
+	@time x = @sync @distributed for i in 1:NPOOLS
 		COUNTS[i,:,:] = parse.(Int64, hcat(split.(SYNC[:, 4:(NPOOLS+3)], [':'])[:, i]...))
 	end
 	### ouput shared arrays
@@ -147,6 +148,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	allele_freq = SharedArrays.SharedArray{Float64,1}(NSNP*6)
 
 	# p = ProgressMeter.Progress(NSNP, 1, "GWAlpha_ML_iterator...", 50)
+	println("Performing GWAlpha_ML in parallel...")
  	@time x = @sync @distributed for snp in 1:NSNP
 		# println(snp)
 		OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
