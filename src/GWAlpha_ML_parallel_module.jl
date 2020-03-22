@@ -1,5 +1,4 @@
 using Distributed
-Distributed.addprocs(length(Sys.cpu_info())-1)
 @everywhere using DelimitedFiles
 @everywhere using Distributions
 @everywhere using LinearAlgebra
