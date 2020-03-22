@@ -1,6 +1,7 @@
 module GWAlpha_ML_parallel_module
 
 using Distributed
+using SharedArrays
 using DelimitedFiles
 using Distributions
 using LinearAlgebra
