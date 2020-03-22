@@ -1,3 +1,5 @@
+module GWAlpha_ML_parallel_module
+
 using Distributed
 @everywhere using DelimitedFiles
 @everywhere using Distributions
@@ -169,4 +171,6 @@ end
 	end
 	OUT = DataFrames.DataFrame(LOCUS_ID=LOCUS_ID, CHROM=sync[LOCUS_ID,1], POS=sync[LOCUS_ID,2], ALLELE=ALLELE_ID, FREQ=ALLELE_FREQ, ALPHA=ALPHA_OUT, PVALUES=P_VALUES, LOD=LOD)
 	return(OUT)
+end
+
 end
