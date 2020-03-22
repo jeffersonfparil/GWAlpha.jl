@@ -34,7 +34,11 @@ include("pval_heuristic_module.jl")
 ### for parallel computation of GWAlpha_ML_parallel_module.jl
 using Distributed
 Distributed.addprocs(length(Sys.cpu_info())-1)
-@everywhere include("GWAlpha_ML_parallel_module.jl")
+try
+	@everywhere include("GWAlpha_ML_parallel_module.jl")
+catch
+	@everywhere include("../src/GWAlpha_ML_parallel_module.jl")
+end
 
 ############################
 ### function definitions ###
