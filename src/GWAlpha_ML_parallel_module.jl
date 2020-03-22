@@ -90,7 +90,7 @@ end
 	return([OUT_ALPHA, OUT_allele, OUT_snp, OUT_1, OUT_pA])
 end
 
-@everywhere function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MAF::Float64)
+function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MAF::Float64)
 	###test:
 	# filename_sync = "test.sync"
 	# filename_phen_py = "test.py"
