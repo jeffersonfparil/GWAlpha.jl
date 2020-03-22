@@ -32,10 +32,11 @@ include("LMM_module.jl")
 include("GP_module.jl")
 include("pval_heuristic_module.jl")
 ### for parallel computation of GWAlpha_ML_parallel_module.jl
-using Distributed
-Distributed.addprocs(length(Sys.cpu_info())-1)
 include("GWAlpha_ML_parallel_module.jl")
-@everywhere using GWAlpha.GWAlpha_ML_parallel_module
+# ### Be sure to:
+# using Distributed
+# Distributed.addprocs(length(Sys.cpu_info())-1)
+# @everywhere using GWAlpha.@everywhere using GWAlpha.PoolGPAS
 
 ############################
 ### function definitions ###
