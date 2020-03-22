@@ -36,7 +36,7 @@ include("GWAlpha_ML_parallel_module.jl")
 # ### Be sure to:
 # using Distributed
 # Distributed.addprocs(length(Sys.cpu_info())-1)
-# @everywhere using GWAlpha.@everywhere using GWAlpha.PoolGPAS
+# @everywhere @everywhere using GWAlpha
 
 ############################
 ### function definitions ###
