@@ -8,6 +8,7 @@ using LinearAlgebra
 using Optim
 using ProgressMeter
 using DataFrames
+# include("/data/Lolium/Softwares/genomic_prediction/src/pval_heuristic_module.jl")
 include("pval_heuristic_module.jl")
 
 function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})
@@ -24,22 +25,24 @@ function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float6
 		 )
 end
 
-function GWAlpha_ML_iterator(sync::Array{Any,2}, snp::Int64, NPOOLS::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
+# function GWAlpha_ML_iterator(SYNC::Array{Any,2}, snp::Int64, NPOOLS::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
+function GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
 	OUT_ALPHA = []
 	OUT_allele = []
 	OUT_snp = []
 	OUT_1 = []
 	OUT_pA = []
-	#parse allele counts from the sync file
-	COUNTS = zeros(Int64, NPOOLS, 6)
-	for i in 1:NPOOLS
-		COUNTS[i,:] = [parse(Int64, x) for x in split.(sync[snp, 4:(NPOOLS+3)], [':'])[i]]
-	end
+	# #parse allele counts from the sync file
+	# COUNTS = zeros(Int64, NPOOLS, 6)
+	# for i in 1:NPOOLS
+	# 	COUNTS[i,:] = [parse(Int64, x) for x in split.(SYNC[snp, 4:(NPOOLS+3)], [':'])[i]]
+	# end
 	#convert to frequencies per pool
-	FREQS = COUNTS ./ ( sum(COUNTS, dims=2) .+ 1e-10 ) #added 1e-10 to the denominator to avoid NAs in pools with no allele counts (zero depth; which should actually have been filtered out after mpileup using awk)
+	counts = COUNTS[:,:,snp]
+	FREQS = counts ./ ( sum(counts, dims=2) .+ 1e-10 ) #added 1e-10 to the denominator to avoid NAs in pools with no allele counts (zero depth; which should actually have been filtered out after mpileup using awk)
 	allele_freqs = sum(FREQS .* BINS, dims=1)
 	#iterate across alleles while filtering by MAF
-	if (sum(COUNTS) != 0.0)
+	if (sum(counts) != 0.0)
 		if (minimum(allele_freqs[allele_freqs .!= 0.0]) >= MAF) & (maximum(allele_freqs) < (1.0 - MAF)) #locus filtering by mean MAF
 			for allele in 1:6
 				if (allele_freqs[allele] > 0.0) & (maximum(FREQS[:,allele]) < 0.999999)  #allele filtering remove alleles with no counts and that the number of pools with allele frequency close to one should not occur even once!
@@ -98,7 +101,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	# filename_phen_py = "test.py"
 	# MAF = 0.01
 	### load the sync and phenotype files
-	sync = DelimitedFiles.readdlm(filename_sync, '\t')
+	SYNC = DelimitedFiles.readdlm(filename_sync, '\t')
 	phen = DelimitedFiles.readdlm(filename_phen_py)
 
 	### gather phenotype specifications
@@ -116,8 +119,8 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	BINS = append!([x for x in PERC], 1) - append!(zeros(1), PERC)
 
 	### gather genotype (allele frequency) specificications
-	NSNP = size(sync)[1]
-	n_pools_sync = size(sync)[2] - 3
+	NSNP = size(SYNC)[1]
+	n_pools_sync = size(SYNC)[2] - 3
 	if NPOOLS != n_pools_sync
 		println("The number of pools with phenotype data does not match the number of pools with allele frequency data!")
 		println("Please check you input files :-)")
@@ -128,6 +131,15 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	end
 
 	### iterate across SNPs
+
+	### creating an allele counts SharedArray from SYNC to minimize memory usage
+	# COUNTS = zeros(Int64, NPOOLS, 6, size(SYNC)[1])
+	### input shared array
+	COUNTS = SharedArrays.SharedArray{Int64,3}(NPOOLS, 6, size(SYNC)[1])
+	for i in 1:NPOOLS
+		COUNTS[i,:,:] = parse.(Int64, hcat(split.(SYNC[:, 4:(NPOOLS+3)], [':'])[:, i]...))
+	end
+	### ouput shared arrays
 	alpha_out = SharedArrays.SharedArray{Float64,1}(NSNP*6)
 	allele_id = SharedArrays.SharedArray{Int64,1}(NSNP*6)
 	locus_id = SharedArrays.SharedArray{Int64,1}(NSNP*6)
@@ -137,7 +149,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	# p = ProgressMeter.Progress(NSNP, 1, "GWAlpha_ML_iterator...", 50)
  	@time x = @sync @distributed for snp in 1:NSNP
 		# println(snp)
-		OUT = GWAlpha_ML_iterator(sync, snp, NPOOLS, BINS, MAF, MIN, MAX, SD)
+		OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
 		idx = collect(snp:(snp+length(OUT[1])-1))
 		alpha_out[idx] = OUT[1]
 		allele_id[idx] = OUT[2]
@@ -151,7 +163,6 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	LOCUS_ID = locus_id[locus_w_eff .== 1]
 	LOCUS_W_EFF = locus_w_eff[locus_w_eff .== 1]
 	ALLELE_FREQ = allele_freq[locus_w_eff .== 1]
-
 
 	### estimate heuristic p-values
 	# alpha_mean = mean(ALPHA_OUT[LOCUS_W_EFF .== 1])
@@ -171,7 +182,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 		elseif ALLELE_ID_INT[i] == 6; ALLELE_ID[i] = "DEL"
 		end
 	end
-	OUT = DataFrames.DataFrame(LOCUS_ID=LOCUS_ID, CHROM=sync[LOCUS_ID,1], POS=sync[LOCUS_ID,2], ALLELE=ALLELE_ID, FREQ=ALLELE_FREQ, ALPHA=ALPHA_OUT, PVALUES=P_VALUES, LOD=LOD)
+	OUT = DataFrames.DataFrame(LOCUS_ID=LOCUS_ID, CHROM=SYNC[LOCUS_ID,1], POS=SYNC[LOCUS_ID,2], ALLELE=ALLELE_ID, FREQ=ALLELE_FREQ, ALPHA=ALPHA_OUT, PVALUES=P_VALUES, LOD=LOD)
 	return(OUT)
 end
 
