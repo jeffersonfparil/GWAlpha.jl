@@ -427,6 +427,73 @@ end
 
 ### testing parallel GWAlpha_ML
 ###OUPUT ARRAYS:
+function GWAlpha_ML_iterator(sync::Array{Any,2}, snp::Int64, NPOOLS::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
+	OUT_ALPHA = []
+	OUT_allele = []
+	OUT_snp = []
+	OUT_1 = []
+	OUT_pA = []
+	#parse allele counts from the sync file
+	COUNTS = zeros(Int64, NPOOLS, 6)
+	for i in 1:NPOOLS
+		COUNTS[i,:] = [parse(Int64, x) for x in split.(sync[snp, 4:(NPOOLS+3)], [':'])[i]]
+	end
+	#convert to frequencies per pool
+	FREQS = COUNTS ./ ( sum(COUNTS, dims=2) .+ 1e-10 ) #added 1e-10 to the denominator to avoid NAs in pools with no allele counts (zero depth; which should actually have been filtered out after mpileup using awk)
+	allele_freqs = sum(FREQS .* BINS, dims=1)
+	#iterate across alleles while filtering by MAF
+	if (sum(COUNTS) != 0.0)
+		if (minimum(allele_freqs[allele_freqs .!= 0.0]) >= MAF) & (maximum(allele_freqs) < (1.0 - MAF)) #locus filtering by mean MAF
+			for allele in 1:6
+				if (allele_freqs[allele] > 0.0) & (maximum(FREQS[:,allele]) < 0.999999)  #allele filtering remove alleles with no counts and that the number of pools with allele frequency close to one should not occur even once!
+				# if (sum(FREQS[:,allele] .== 0.0) < NPOOLS) & (sum(FREQS[:,allele] .> 0.999999) < 1) #filter-out alleles with at least 1 pool fixed for that allele because it causes a failure in the optimization
+					freqA = FREQS[:, allele]
+					pA = sum(freqA .* BINS)
+					pB = 1 - pA
+					BINA = (freqA .* BINS) ./ pA
+					BINB = ( (1 .- freqA) .* BINS ) ./ (1-pA)
+					percA = cumsum(BINA)
+					percB = cumsum(BINB)
+
+					### optimize (minimize) -log-likelihood of these major allele frequencies modelled as a beta distribution
+					# using Nelder-Mead optimization or Box minimisation (try-catch if one or the other fails with preference to Nelder-Mead)
+					lower_limits = [1e-20, 1e-20, 1e-20, 1e-20]
+					upper_limits = [1.0, 1.0, 1.0, 1.0]
+					initial_values = [0.1, 0.1, 0.1, 0.1]
+					BETA = try
+						Optim.optimize(beta->neg_log_likelihood_cdfbeta(beta, percA, percB), initial_values, NelderMead())
+					catch
+						try
+							Optim.optimize(beta->neg_log_likelihood_cdfbeta(beta, percA, percB), lower_limits, upper_limits, initial_values)
+						catch ### lower limits of 1e-20 to 1e-6 causes beta dist parameter values to shrink to zero somehow - so we'r'e setting lower limits to 1e-5 instead
+							lower_limits = [1e-5, 1e-5, 1e-5, 1e-5]
+							Optim.optimize(beta->neg_log_likelihood_cdfbeta(beta, percA, percB), lower_limits, upper_limits, initial_values)
+						end
+					end
+					MU_A = MIN + ((MAX-MIN)*BETA.minimizer[1]/(BETA.minimizer[1]+BETA.minimizer[2]))
+					MU_B = MIN + ((MAX-MIN)*BETA.minimizer[3]/(BETA.minimizer[3]+BETA.minimizer[4]))
+
+					### compute alpha
+					W_PENAL = 2*sqrt(pA*pB)
+					ALPHA = W_PENAL*(MU_A - MU_B) / SD
+					append!(OUT_ALPHA, ALPHA)
+					append!(OUT_allele, allele)
+					append!(OUT_snp, snp)
+					append!(OUT_1, 1)
+					append!(OUT_pA, pA)
+				else
+					### for explicit zero effects for null (low to none) frequency alleles
+					# append!(ALPHA_OUT, 0.0)
+					# append!(ALLELE_ID, allele)
+					# append!(LOCUS_ID, snp)
+					# append!(LOCUS_W_EFF, 0)
+					# append!(ALLELE_FREQ, allele_freqs[allele])
+				end
+			end
+		end
+	end
+	return([OUT_ALPHA, OUT_allele, OUT_snp, OUT_1, OUT_pA])
+end
 @everywhere function GWAlpha_ML_iterator(sync::Array{Any,2}, snp::Int64, NPOOLS::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
 	OUT_ALPHA = []
 	OUT_allele = []
