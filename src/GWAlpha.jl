@@ -563,9 +563,9 @@ end
 end
 function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MAF::Float64)
 	###test:
-	filename_sync = "test.sync"
-	filename_phen_py = "test.py"
-	MAF = 0.01
+	# filename_sync = "test.sync"
+	# filename_phen_py = "test.py"
+	# MAF = 0.01
 	### load the sync and phenotype files
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
 	phen = DelimitedFiles.readdlm(filename_phen_py)
