@@ -54,6 +54,20 @@ Distributed.addprocs(length(Sys.cpu_info())-1)
 ############################
 ### function definitions ###
 ############################
+function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})
+	-sum(
+		 log.(10,
+		 	 (Distributions.cdf.(Distributions.Beta(beta[1], beta[2]), data_A)) .-
+		 	 (Distributions.cdf.(Distributions.Beta(beta[1], beta[2]), append!(zeros(1), data_A[1:(length(data_A)-1)])))
+		     )
+		 )     -sum(
+		 log.(10,
+		 	 (Distributions.cdf.(Distributions.Beta(beta[3], beta[4]), data_B)) .-
+		 	 (Distributions.cdf.(Distributions.Beta(beta[3], beta[4]), append!(zeros(1), data_B[1:(length(data_B)-1)])))
+		     )
+		 )
+end
+
 @everywhere function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})
 	-sum(
 		 log.(10,
