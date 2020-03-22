@@ -8,6 +8,7 @@ using LinearAlgebra
 using Optim
 using ProgressMeter
 using DataFrames
+include("pval_heuristic_module.jl")
 
 function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})
 	-sum(
