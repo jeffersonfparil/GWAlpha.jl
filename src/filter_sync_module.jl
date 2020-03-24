@@ -69,7 +69,7 @@ function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 	filename_out = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", MAF, "_DEPTH", DEPTH, ".sync")
 	filename_out_idx = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", MAF, "_DEPTH", DEPTH, "_IDX_OUT.txt")
 	if (isfile(filename_out)) & (isfile(filename_out_idx))
-		OUT = convert(Array{Bool,1}, DelimitedFiles.readdlm(filename_out)[:,1])
+		OUT = convert(Array{Bool,1}, DelimitedFiles.readdlm(filename_out_idx)[:,1])
 		println(string("Using the existing filtered sync file: ", filename_out))
 		println(string("And the corresponding existing filtered sync file indices: ", filename_out_idx))
 	else
