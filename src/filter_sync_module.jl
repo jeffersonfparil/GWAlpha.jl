@@ -67,9 +67,11 @@ with user defined minimum allele frequency (MAF) and minimum sequencing depth (D
 function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 	### test if an output file exists and use that instead of re-filtering the sync file
 	filename_out = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", MAF, "_DEPTH", DEPTH, ".sync")
-	if isfile(filename_out)
-		OUT = DelimitedFiles.readdlm(filename_out)
+	filename_out_idx = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", MAF, "_DEPTH", DEPTH, "_IDX_OUT.txt")
+	if (isfile(filename_out)) & (isfile(filename_out_idx))
+		OUT = convert(Array{Bool,1}, DelimitedFiles.readdlm(filename_out)[:,1])
 		println(string("Using the existing filtered sync file: ", filename_out))
+		println(string("And the corresponding existing filtered sync file indices: ", filename_out_idx))
 	else
 		### load the sync and phenotype files
 		sync = DelimitedFiles.readdlm(filename_sync, '\t')
@@ -111,6 +113,7 @@ function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 		#write out filtered sync
 		idx_in_sync = maximum(reshape(OUT, 6, NSNP), dims=1)'[:,1]
 		DelimitedFiles.writedlm(filename_out, sync[idx_in_sync, :])
+		DelimitedFiles.writedlm(filename_out_idx, OUT)
 	end
 	return(OUT)
 end
