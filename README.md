@@ -31,7 +31,7 @@ using GWAlpha
 
 ## Usage
 ```julia
-GWAlpha.PoolGPAS(filename_sync, filename_phen)
+GWAlpha.PoolGPAS(filename_sync, filename_pheno)
 
 ```
 
@@ -48,7 +48,7 @@ GWAlpha.PoolGPAS(filename_sync, filename_phen)
 	perc=[0.2,0.4,0.6,0.8];		# cummulative pool sizes percentiles excluding the last pool
 	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
 	```
-	+ **.csv** extension for comma-separated headerless poolsizes and corresponding mean phenotype values, e.g.:
+	+ **.csv** extension for comma-separated headerless pool sizes and corresponding mean phenotype values, e.g.:
 	```julia
 	200.0,0.11988952929875112
 	200.0,0.18030259365994225
