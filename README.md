@@ -75,7 +75,7 @@ GWAlpha.PoolGPAS(filename_sync, filename_phen)
 
 ## Outputs
 
-1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
+1. `DataFrames.DataFrame` of additive allele effects with positional identification
 2. Array of covariate effects
 3. Additive allele effects csv file:
 ```julia
