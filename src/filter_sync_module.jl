@@ -69,6 +69,7 @@ function filter_sync(;filename_sync::String, MAF::Float64, DEPTH::Int64=0)
 	filename_out = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", MAF, "_DEPTH", DEPTH, ".sync")
 	if isfile(filename_out)
 		OUT = DelimitedFiles.readdlm(filename_out)
+		println(string("Using the existing filtered sync file: ", filename_out))
 	else
 		### load the sync and phenotype files
 		sync = DelimitedFiles.readdlm(filename_sync, '\t')
