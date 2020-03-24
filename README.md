@@ -26,20 +26,19 @@ Installation in Julia:
 ```julia
 using Pkg
 Pkg.add(PackageSpec(url="https://github.com/jeffersonfparil/GWAlpha.jl.git", rev="master"))
-Pkg.build()
+using GWAlpha
 ```
 
-## Testing
+## Usage
 ```julia
-using Pkg
-Pkg.update("GWAlpha")
-Pkg.test("GWAlpha")
+GWAlpha.PoolGPAS(filename_sync, filename_phen)
+
 ```
 
 ## Inputs
 
-1. [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/)
-2. phenotype data filename
+1. [synchronized pileup filename](https://sourceforge.net/p/popoolation2/wiki/Manual/) (mandatory)
+2. phenotype data filename (mandatory)
 	+ **.py** extension for iterative maximum likelihood estimation i.e. `MODEL="FIXED_GWAlpha"`, e.g.:
 	```julia
 	Pheno_name='Phenotype Name';
@@ -61,17 +60,18 @@ Pkg.test("GWAlpha")
 4. **DEPTH**: minimum sequencing depth threshold (default=10)
 5. **MODEL**: GPAS model to use (default="FIXED_GWAlpha")
 
-	+ FIXED_GWAlpha
-	+ FIXED_LS
-	+ FIXED_RR (alpha=0.0)
-	+ FIXED_GLMNET (alpha=0.5)
-	+ FIXED_LASSO (alpha=1.0)
-	+ MIXED_RR (alpha=0.0)
-	+ MIXED_GLMNET (alpha=0.5)
-	+ MIXED_LASSO (alpha=1.0)
+	+ *FIXED_GWAlpha*
+	+ *FIXED_LS*
+	+ *FIXED_RR* (alpha=0.0)
+	+ *FIXED_GLMNET* (alpha=0.5)
+	+ *FIXED_LASSO* (alpha=1.0)
+	+ *MIXED_RR* (alpha=0.0)
+	+ *MIXED_GLMNET* (alpha=0.5)
+	+ *MIXED_LASSO* (alpha=1.0)
 
-6. **COVARIATE**: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
+6. **COVARIATE**: array of covariate/s to use (default=nothing; currently not applicable for *FIXED_GWAlpha* model)
 7. **FPR**: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
+8. **PARALLEL**: Parallel execution of the *FIXED_GWAlpha* model (default=false)
 
 ## Outputs
 
