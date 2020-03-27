@@ -445,6 +445,7 @@ using Pool sequencing (Pool-seq) data.
 	- MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
 7. *FPR*: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
+8. **PARALLEL**: Parallel execution of the *FIXED_GWAlpha* model (default=false)
 
 # Output
 1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
@@ -458,13 +459,18 @@ using Pool sequencing (Pool-seq) data.
 filename_sync = "test/test.sync"
 filename_phen_py = "test/test.py"
 filename_phen_csv = "test/test.csv"
-@time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync, filename_phen_py, MAF=0.01, DEPTH=10, MODEL="FIXED_GWAlpha", COVARIATE=nothing, FPR=0.01, PARALLEL=true)
+@time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync, filename_phen_py, MAF=0.01, DEPTH=10, MODEL="FIXED_GWAlpha", COVARIATE=nothing, FPR=0.01, PARALLEL=false)
 ### Genomic prediction model building
 GWAlpha.poolFST_module.Fst_pairwise(sync_fname=filename_sync, window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
 filename_covar_csv= string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")
 using DelimitedFiles
 COVARIATE = DelimitedFiles.readdlm(filename_covar_csv, ',')
 @time OUT_GP   = GWAlpha.PoolGPAS(filename_sync, filename_phen_csv, MAF=0.01, DEPTH=10, MODEL="FIXED_RR", COVARIATE=COVARIATE)
+### For parallel execution of FIXED_GWAlpha model load Distributed package, set the number of threads, and (re)load GWAlpha with @everywhere
+using Distributed
+Distributed.addprocs(length(Sys.cpu_info()))
+@everywhere using GWAlpha
+@time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync, filename_phen_py, MAF=0.01, DEPTH=10, MODEL="FIXED_GWAlpha", COVARIATE=nothing, FPR=0.01, PARALLEL=true)
 ```
 """
 function PoolGPAS(filename_sync::String, filename_phen::String; MAF::Float64=0.01, DEPTH::Int64=10, MODEL::String="FIXED_GWAlpha", COVARIATE::Any=nothing, FPR::Float64=0.01, PARALLEL::Bool=false)
