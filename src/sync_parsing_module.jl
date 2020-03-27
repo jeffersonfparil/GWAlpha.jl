@@ -36,10 +36,6 @@ Allele frequency csv file with the filname: `string(join(split(filename_sync, ".
 ```
 sync_parsing_module.sync_parse("test/test.sync")
 ```
-
-# Note
-Make sure the output file does not exist before executing this function.
-**This function appends into the existing output file** with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
 """
 function sync_parse(filename_sync::String)
 	### load the sync file
@@ -48,6 +44,11 @@ function sync_parse(filename_sync::String)
 	### gather genotype (allele frequency) specificications
 	NSNP = size(sync)[1]
 	NPOOLS = size(sync)[2] - 3
+
+	### remove the existing target output file if it exists
+	if (isfile(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")))
+		rm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"))
+	end
 
 	### iterate across SNPs
 	COUNTS = zeros(Int64, NPOOLS, 6) #nrow=n_pools and ncol=A,T,C,G,N,DEL
