@@ -292,14 +292,14 @@ function GWAlpha_GP(filename_sync::String, filename_phen_csv::String, MAF::Float
 		INTCOVAR_EFF, EFF = try
 				GP_module.GGMIX(X=X_filtered, y=y, Z=COVARIATE, alfa=0.5)
 			catch
-				(repeat([0.0], inner=(1+size(COVARIATE, 2))), repeat([0.0], inner=size(X_filtered, 2)))
+				(repeat([0.0], inner=size(INTERCEPT_AND_COVARIATE,2)), repeat([0.0], inner=size(X_filtered, 2)))
 			end
 		b = vcat(INTCOVAR_EFF, EFF)
 	elseif MODEL == "MIXED_LASSO"
 		INTCOVAR_EFF, EFF = try
 				GP_module.GGMIX(X=X_filtered, y=y, Z=COVARIATE, alfa=1.0)
 			catch
-				(repeat([0.0], inner=(1+size(COVARIATE, 2))), repeat([0.0], inner=size(X_filtered, 2)))
+				(repeat([0.0], inner=size(INTERCEPT_AND_COVARIATE,2)), repeat([0.0], inner=size(X_filtered, 2)))
 			end
 		b = vcat(INTCOVAR_EFF, EFF)
 	else
