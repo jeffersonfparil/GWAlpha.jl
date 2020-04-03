@@ -352,6 +352,7 @@ end
 function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::String, FPR::Float64=0.01)
 	### set missing values to zero
 	OUT.LOD[isnan.(OUT.LOD)] .= 0.0
+	OUT.LOD[isinf.(OUT.LOD)] .= maximum(OUT.LOD[isinf.(OUT.LOD) .== false])
 	### plot in R
 	@rput OUT;
 	@rput filename_phe;
