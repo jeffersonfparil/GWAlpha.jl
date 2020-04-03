@@ -36,6 +36,10 @@ Allele frequency csv file with the filname: `string(join(split(filename_sync, ".
 ```
 sync_parsing_module.sync_parse("test/test.sync")
 ```
+
+# Note
+Make sure the output file does not exist before executing this function.
+**This function appends into the existing output file** with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
 """
 function sync_parse(filename_sync::String)
 	### load the sync file
@@ -45,14 +49,14 @@ function sync_parse(filename_sync::String)
 	NSNP = size(sync)[1]
 	NPOOLS = size(sync)[2] - 3
 
-	### remove the existing target output file if it exists
-	if (isfile(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")))
-		rm(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"))
+	### prepare output csv file of allele frequencies
+	filename_out = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
+	if isfile(filename_out)
+		rm(filename_out)
 	end
-
+	io = open(filename_out, "a")
 	### iterate across SNPs
 	COUNTS = zeros(Int64, NPOOLS, 6) #nrow=n_pools and ncol=A,T,C,G,N,DEL
-	# global OUT = DataFrames.DataFrame()
 	progress_bar = ProgressMeter.Progress(NSNP, dt=1, desc="Progress: ",  barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:yellow) #progress bar
 	for snp in 1:NSNP
 		# snp = 65
@@ -63,43 +67,18 @@ function sync_parse(filename_sync::String)
 		end
 		#convert to frequencies per pool (FREQS: npools x (nalleles=6))
 		FREQS = COUNTS ./ ( sum(COUNTS, dims=2) .+ 1e-10 ) #added 1e-10 to the denominator to avoid NAs in pools with no allele counts (zero depth; which should actually have been filtered out after mpileup using awk)
-		# FREQS = COUNTS ./ sum(COUNTS, dims=2)
 		allele_freq_across_pools = sum(FREQS, dims=1) ./ NPOOLS
-		# #filter by MAF
-		# non_zero_index = convert(Array{Bool}, allele_freq_across_pools .!= 0.0)
-		# allele_freq_across_pools_non_zero = allele_freq_across_pools[non_zero_index]
-		# if (isempty(allele_freq_across_pools_non_zero) == false) #for locui without any allele counts due to popoolations' filtering by read quality?! not sure but they exist!
-		# 	if (minimum(allele_freq_across_pools_non_zero) > MAF) & (maximum(allele_freq_across_pools_non_zero) < (1.0 - MAF)) # filter by MAF and with allele freq ~1.0 that slipped
-				# non_zero_nonref_index = convert(Array{Bool}, allele_freq_across_pools_non_zero .!= maximum(allele_freq_across_pools_non_zero))
-				# OUT_FREQS = FREQS[:, non_zero_index[:]][:, non_zero_nonref_index[:]]' #transpose so we can append each locus (can have multiple alleles per locus) to the next line
-				# OUT_FREQS = FREQS[:, non_zero_index[:]]' #transpose so we can append each locus including the reference allele!!! (can have multiple alleles per locus) to the next line
-				OUT_FREQS = FREQS'
-				# idx_remove_major_allele = allele_freq_across_pools_non_zero .!= maximum(allele_freq_across_pools_non_zero) #remove major allele to allocate 1 degree of freedom to the mean thereby reducing the dimesionality of the predictions substantially
-				# OUT_FREQS = OUT_FREQS[idx_remove_major_allele, :]  #remove major allele to allocate 1 degree of freedom to the mean thereby reducing the dimesionality of the predictions substantially
-				OUT_CHR = sync[snp, 1]
-				OUT_POS = sync[snp, 2]
-				# OUT_ALLELE = ["A", "T", "C", "G", "N", "DEL"][non_zero_index[:]]
-				OUT_ALLELE = ["A", "T", "C", "G", "N", "DEL"]
-				# OUT_ALLELE = ["A", "T", "C", "G", "N", "DEL"][non_zero_index[:]][idx_remove_major_allele]  #remove major allele to allocate 1 degree of freedom to the mean thereby reducing the dimesionality of the predictions substantially
-				# OUT_REFALLELE = ["A", "T", "C", "G", "N", "DEL"][convert(Array{Bool}, allele_freq_across_pools .== maximum(allele_freq_across_pools))[:]]
-				for a in 1:size(OUT_FREQS)[1] #iterate across alleles
-					# global OUT = DataFrames.DataFrame(CHROM=OUT_CHR, POS=OUT_POS, REF=OUT_REFALLELE, ALLELE=OUT_ALLELE[a])
-					global OUT = DataFrames.DataFrame(CHROM=OUT_CHR, POS=OUT_POS, ALLELE=OUT_ALLELE[a])
-					# global OUT = DataFrames.DataFrame(CHROM=OUT_CHR, POS=OUT_POS, REF=OUT_REFALLELE, ALLELE=OUT_ALLELE[a], POOL1=OUT_FREQS[a,1])
-					# insert!(OUT, OUT_CHR, :CHROM)
-					# insert!(OUT, OUT_POS, :POS)
-					# insert!(OUT, OUT_REFALLELE, :REF)
-					# insert!(OUT, OUT_ALLELE[a], :ALLELE)
-					# for p in 2:NPOOLS #add allele frequency per pool iteratively into the dataframe
-					for p in 1:NPOOLS #add allele frequency per pool iteratively into the dataframe
-						insert!(OUT, size(OUT)[2]+1, OUT_FREQS[a,p], Symbol("POOL", p))
-					end
-					CSV.write(string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv"), OUT, append=true)
-				end
-		# 	end
-		# end
+		OUT_FREQS = convert(Array{Any,2}, FREQS')
+		OUT_CHR = repeat([sync[snp, 1]], inner=size(OUT_FREQS,1))
+		OUT_POS = repeat([sync[snp, 2]], inner=size(OUT_FREQS,1))
+		OUT_ALLELE = ["A", "T", "C", "G", "N", "DEL"]
+		OUT = hcat(OUT_CHR, OUT_POS,OUT_ALLELE, OUT_FREQS)
+		DelimitedFiles.writedlm(io, OUT, ',')
 		ProgressMeter.update!(progress_bar, snp)
 	end
+	close(io)
+	println("===============================================================")
+	println(string("Sync file parsed into a csv file: ", filename_out))
 	println("===============================================================")
  	return 0
 end
