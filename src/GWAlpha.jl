@@ -343,14 +343,16 @@ function write_output(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::St
 end
 
 function plot_manhattan(OUT::DataFrames.DataFrame, filename_phe::String, MODEL::String, FPR::Float64=0.01)
-	### set missing values to zero
-	OUT.LOD[isnan.(OUT.LOD)] .= 0.0
 	### plot in R
 	@rput OUT;
 	@rput filename_phe;
 	@rput MODEL;
 	@rput FPR;
+	### remove missing values and convert infinite LOD into the maximum non-infinite LOD
 	R"OUT = droplevels(OUT[OUT$CHROM != 'Intercept', ])";
+	R"OUT$LOD[is.na(OUT$LOD)] = 0.0";
+	R"OUT$LOD[is.infinite(OUT$LOD)] = max(OUT$LOD[!is.infinite(OUT$LOD)])";
+	### making sure the data types are what we expect
 	R"OUT$LOCUS_ID = as.numeric(unlist(OUT$LOCUS_ID))";
 	R"OUT$CHROM = as.factor(unlist(OUT$CHROM))";
 	R"OUT$POS = as.numeric(unlist(OUT$POS))";
