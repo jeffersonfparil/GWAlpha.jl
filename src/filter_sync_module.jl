@@ -59,7 +59,7 @@ with user defined minimum allele frequency (MAF) and minimum sequencing depth (D
 
 # Output:
 1. filtered sync file with the suffix: `string("_MAF", MAF, "_DEPTH", DEPTH, ".sync")`
-2. indices of sync loci passing the MAF-DEPTH filtering
+2. indices of sync loci * 6 alleles passing the MAF-DEPTH filtering (can be used to filter parsed sync genotype data [sync_parsing_module.sync_parse()])
 
 # Example
 `sync_array = filter_sync(filename_sync="test/test.sync", MAF=0.001, DEPTH=10)`

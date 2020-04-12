@@ -447,7 +447,7 @@ using Pool sequencing (Pool-seq) data.
 	- MIXED_LASSO (alpha=1.0)
 6. *COVARIATE*: array of covariate/s to use (default=nothing; currently not applicable for FIXED_GWAlpha model)
 7. *FPR*: False positive rate or the significance level to use to define the Bonferroni threshold (default=0.01)
-8. **PARALLEL**: Parallel execution of the *FIXED_GWAlpha* model (default=false; NOTE: Load GWAlpha using @everywhere fr this to work truly parallel.)
+8. **PARALLEL**: Parallel execution of the *FIXED_GWAlpha* model (default=false; NOTE: Load GWAlpha using @everywhere for this to work truly parallel.)
 
 # Output
 1. DataFrames.DataFrame of additive allele effects with the corresponding identification (CHROM, POS, ALLELE, FREQ)
