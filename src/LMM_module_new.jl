@@ -68,7 +68,7 @@ function BLUE_glmnet(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V::Array{Flo
 	return(b_hat)
 end
 ### mixed linear model parameter optimization and effects estimation
-function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0, lambda::Float64=1.00, OPTIMIZE::Bool=true, VARFIXEF::Bool=true)
+function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0, lambda::Float64=1.00, OPTIMIZE::Bool=true, VARFIXEF::Bool=false)
 	### y = Xb + Zu + e; where Xb=fixed and Za=random
 	σ2e = parameters[1] # variance of the error effects (assuming homoscedasticity)
 	σ2u = parameters[2] # variance of the other random effects (assuming homoscedasticity)
@@ -127,12 +127,14 @@ function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{F
 		### Return the fixed effects (b_hat), random effects (u_hat), and optional fixed effects variance (σ2_b_hat) estimates
 		OUT = []
 		if VARFIXEF
+			### Computationally intensive!!!
 			V_b_hat = inverse(X' * inverse(V) * X)
 			σ2_b_hat = diag(V_b_hat)
 		else
 			σ2_b_hat = nothing
 		end
-		push!(OUT, (fixef=b_hat, ranef=u_hat, var_fixef=σ2_b_hat))
+		# push!(OUT, (fixef=b_hat, ranef=u_hat, var_fixef=σ2_b_hat))
+		push!(OUT, [b_hat, u_hat, σ2_b_hat])
 	end
 	return(OUT[1])
 end
@@ -175,8 +177,10 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 	X[:,:] = (X .- uX)
 	Z[:,:] = (Z .- uZ)
 	### Maximum likelihood estimation of the error variance (Ve) and random covariate variance (Vu)
-	lower_limit = [0.0, 0.0]
-	upper_limit = [Inf, Inf]
+	# lower_limit = [0.0, 0.0]
+	# upper_limit = [Inf, Inf]
+	lower_limit = [1.0e-50, 1.0e-50]
+	upper_limit = [1.0e+50, 1.0e+50]
 	initial_VeVu = [1.0, 1.0]
 	if METHOD_FIX_EST == "GLMNET"
 		@rput X;
@@ -187,10 +191,27 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 	else
 		lambda = 1.00
 	end
-	optim_out = Optim.optimize(VeVu -> LMM_optim(VeVu, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=true), lower_limit, upper_limit, initial_VeVu)
-	Ve, Vu = optim_out.minimizer
+	# optim_out = Optim.optimize(VeVu -> LMM_optim(VeVu, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=true), lower_limit, upper_limit, initial_VeVu)
+	@rput inverse;
+	@rput BLUE_least_squares;
+	@rput BLUE_glmnet;
+	@rput LMM_optim;
+	@rput X;
+	@rput y;
+	@rput Z;
+	@rput METHOD_VAR_EST;
+	@rput METHOD_FIX_EST;
+	@rput alfa;
+	@rput lambda;
+	@rput lower_limit;
+	@rput upper_limit;
+	@rput initial_VeVu;
+	# R"LMM_optim(c(0.0,0.0), X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=TRUE)"
+	R"optim_out = optim(par=initial_VeVu, fn=LMM_optim, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=TRUE, method='L-BFGS-B', lower=lower_limit, upper=upper_limit)"
+	@rget optim_out;
+	Ve, Vu = optim_out[:par]
 	### Fixed effects (b), random effects (u), and fixed effects varaince (Vb) estimation (NOTE: No need to back-transform these estimated effects because we simply centered the explanatory variables meaning they're still on the same space)
-	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=false, VARFIXEF=true)
+	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=false)
 	### Output
 	return (b0=uy, b=b, u=u)
 end
@@ -200,6 +221,7 @@ end #end of LMM module
 # ### Test using genomic_prediction/src/GPASim_*
 # load modules and libraries
 GWAlpha_HOME = "/home/student.unimelb.edu.au/jparil/Documents/QUANTITATIVE_GENETICS-combine_SNP_and_transcript_data/SRC/GWAlpha.jl/src"
+# GWAlpha_HOME = "/data/Lolium/Softwares/GWAlpha.jl/src"
 cd(GWAlpha_HOME)
 include("sync_parsing_module.jl")
 include("filter_sync_module.jl")
@@ -208,6 +230,7 @@ using Statistics
 using LinearAlgebra
 # setwd
 DIR = "/home/student.unimelb.edu.au/jparil/Downloads/test_GWAlpha.jl"
+# DIR = "/data/Lolium/Quantitative_Genetics/LOLSIM2020/LOLSIM_2rep_10qtl_0.00mr_0.25fgs_0.00bgs_1grad"
 cd(DIR)
 # define input files
 prefix = "POP_03"
@@ -239,14 +262,14 @@ fname_fst_wericock = string("INPUT/", prefix, "_WEIRCOCK.fst")
 ### COVARIATE
 	Z = DelimitedFiles.readdlm(fname_fst_wericock, ',')
 ### MODEL BUILDING
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="LS")
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="LS")
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=0.0)
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=0.0)
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=0.5)
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=0.5)
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=1.0)
-	b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=1.0)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="LS")
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="LS")
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=0.0)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=0.0)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=0.5)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=0.5)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="ML", METHOD_FIX_EST="GLMNET", alfa=1.0)
+	@time b0, b, u = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET", alfa=1.0)
 ### PREDICTION
 	y_pred = b0 .+ (X*b) + (Z*u)
 	RMSE = sqrt(mean((y.-y_pred).^2))
