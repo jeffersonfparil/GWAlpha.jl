@@ -1,4 +1,4 @@
-module GWAlpha_ML_parallel_module
+module GWAlpha_ML_module
 
 using Distributed
 using SharedArrays
@@ -7,10 +7,31 @@ using Distributions
 using LinearAlgebra
 using Optim
 using ProgressMeter
-using DataFrames
-# include("/data/Lolium/Softwares/genomic_prediction/src/pval_heuristic_module.jl")
-include("pval_heuristic_module.jl")
+include("significance_testing_module.jl")
 
+"""
+# _____________________________________________________________________________________________________________________________________________
+# Negative log-likelihood of the Beta distribution parameters (shape1 and shape2) given the distribution of the allele frequencies across pools
+
+`neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})`
+
+# Inputs
+1. beta [Array{Float64,1}]: 4-element vector of the beta distribution shape parameters, 2 for each of the data distributions
+2. data_A [Array{Float64,1}; xi ∉ 0]: allele frequency distribution across pools
+3. data_B [Array{Float64,1}; xi ∉ 0]: additive inverse of the allele frequency distribution across pools
+
+# Output
+1. Negative log-likelihood of the Beta distribution parameters (shape1 and shape2) given the distribution of the allele frequencies across pools
+
+# Examples
+```
+beta = [1.0, 1.0, 0.5, 1.0]
+f = rand(5); bins = repeat([0.2], inner=5); p = 0.5
+data_A = cumsum( (f .* bins ./ p) )
+data_B = cumsum( ((1 .- f) .* bins ./ (1 .- p)) )
+GWAlpha_ML_module.neg_log_likelihood_cdfbeta(beta, data_A, data_B)
+```
+"""
 function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float64,1}, data_B::Array{Float64,1})
 	-sum(
 		 log.(10,
@@ -25,13 +46,45 @@ function neg_log_likelihood_cdfbeta(beta::Array{Float64,1}, data_A::Array{Float6
 		 )
 end
 
-# function GWAlpha_ML_iterator(SYNC::Array{Any,2}, snp::Int64, NPOOLS::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
+"""
+# _____________________________________________________________________________________________________________________________________________
+# Iterating function per locus for genome-wide additive allelic effects (alpha) association using Pool-seq data
+
+`GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)`
+
+# Inputs
+1. COUNTS [SharedArray{Int64,3}]: 3-dimensional array of allele counts for each locus for each of the 6 SNP alleles (A:T:C:G:N:DEL) for each pool
+2. snp [Int64]: index number of the SNP
+3. BINS [Array{Float64,1}]: vector of pool sizes
+4. MAF [Float64]: minor allele frequency threshold to filter out alleles (MAF <= f > 1-MAF)
+5. MIN [Float64]: minimum phenotype value
+6. MAX [Float64]: maximum phenotype value
+7. SD [Float64]: standard deviation of phenotype value
+
+# Outputs
+1. OUT_ALPHA: vector of additive allelic effects of alleles in the locus
+2. OUT_allele: vector of alleles passing minor allele frequency (MAF) threshold filtering
+3. OUT_snp: vector of repeated locus id for each of the allelic effects or allele
+4, OUT_1: vector of ones and zeros indicating the indices of the alleles passing minor allele frequency (MAF) threshold filtering among the 6 SNP alleles per locus (A:T:C:G:N:DEL)
+5, OUT_pA: vector of allele frequencies per locus
+
+# Examples
+```
+NPOOLS=5; NLOCI=20; BINS=repeat([1.0/NPOOLS],inner=NPOOLS); MAF=0.001; MIN=0.00; MAX=10.00; SD=1.00;
+COUNTS = SharedArrays.SharedArray{Int64,3}(NPOOLS, 6, NLOCI)
+COUNTS[:,:,:] = Int.(round.(rand(NPOOLS, 6, NLOCI)*100))
+for snp in 1:NLOCI
+	out = GWAlpha_ML_module.GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
+	println(out)
+end
+```
+"""
 function GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Array{Float64,1}, MAF::Float64, MIN::Float64, MAX::Float64, SD::Float64)
-	OUT_ALPHA = []
-	OUT_allele = []
-	OUT_snp = []
-	OUT_1 = []
-	OUT_pA = []
+	OUT_ALPHA = convert(Array{Float64}, zeros(6))
+	OUT_allele = zeros(6)
+	OUT_snp = zeros(6)
+	OUT_1 = zeros(6)
+	OUT_pA = convert(Array{Float64}, zeros(6))
 	# #parse allele counts from the sync file
 	# COUNTS = zeros(Int64, NPOOLS, 6)
 	# for i in 1:NPOOLS
@@ -76,18 +129,18 @@ function GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Arr
 					### compute alpha
 					W_PENAL = 2*sqrt(pA*pB)
 					ALPHA = W_PENAL*(MU_A - MU_B) / SD
-					append!(OUT_ALPHA, ALPHA)
-					append!(OUT_allele, allele)
-					append!(OUT_snp, snp)
-					append!(OUT_1, 1)
-					append!(OUT_pA, pA)
+					OUT_ALPHA[allele] =  ALPHA
+					OUT_allele[allele] =  allele
+					OUT_snp[allele] =  snp
+					OUT_1[allele] =  1
+					OUT_pA[allele] =  pA
 				else
-					### for explicit zero effects for null (low to none) frequency alleles
-					# append!(ALPHA_OUT, 0.0)
-					# append!(ALLELE_ID, allele)
-					# append!(LOCUS_ID, snp)
-					# append!(LOCUS_W_EFF, 0)
-					# append!(ALLELE_FREQ, allele_freqs[allele])
+					## for explicit zero effects for null (low to none) frequency alleles
+					OUT_ALPHA[allele] =  0.0
+					OUT_allele[allele] =  allele
+					OUT_snp[allele] =  snp
+					OUT_1[allele] =  0
+					OUT_pA[allele] =  allele_freqs[allele]
 				end
 			end
 		end
@@ -95,11 +148,31 @@ function GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Arr
 	return([OUT_ALPHA, OUT_allele, OUT_snp, OUT_1, OUT_pA])
 end
 
-function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MAF::Float64)
-	###test:
-	# filename_sync = "test.sync"
-	# filename_phen_py = "test.py"
-	# MAF = 0.01
+"""
+# _____________________________________________________________________________________________________________________________________________
+# Genome-wide additive allelic effects (alpha) association using Pool-seq data
+
+`GWAlpha_ML(filename_sync::String, filename_phen_py::String, MAF::Float64)`
+
+# Inputs
+1. *filename_sync* [String]: filename of the synchronized pileup file, i.e. the genotype file from pool sequencing (Pool-seq)
+2. *filename_phen_py* [String]; filename of the phenotype specifications (with ".py" extension name for cross-compatibility with [GWAlpha.py](https://github.com/aflevel/GWAlpha))
+3. *MAF* [Float64]: minor allele frequency threshold to filter out alleles (MAF <= f > 1-MAF)
+
+# Output
+1. Tuple of vectors of the additive allelic affects across loci with the corresponding locus identification and significance test statistics
+	- CHROM
+	- POS
+	- ALLELE
+	- FREQ
+	- ALPHA
+	- PVALUES
+	- LOD
+
+# Example
+`OUT = GWAlpha_ML_module.GWAlpha_ML(filename_sync="test/test.sync", filename_phen_py="test/test.py", MAF=0.001)`
+"""
+function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float64)
 	### load the sync and phenotype files
 	SYNC = DelimitedFiles.readdlm(filename_sync, '\t')
 	phen = DelimitedFiles.readdlm(filename_phen_py)
@@ -130,10 +203,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 		n_pools_sync = nothing #clear out contents of this redundant n_pools variable
 	end
 
-	### iterate across SNPs
-
 	### creating an allele counts SharedArray from SYNC to minimize memory usage
-	# COUNTS = zeros(Int64, NPOOLS, 6, size(SYNC)[1])
 	### input shared array
 	COUNTS = SharedArrays.SharedArray{Int64,3}(NPOOLS, 6, size(SYNC)[1])
 	progress_bar = ProgressMeter.Progress(NPOOLS, dt=1, desc="Converting the sync file into a SharedArray of allele counts: ",  barglyphs=BarGlyphs("[=> ]"), barlen=50, color=:yellow)
@@ -153,7 +223,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
  	@time x = @sync @distributed for snp in 1:NSNP
 		# println(snp)
 		OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
-		idx = collect(snp:(snp+length(OUT[1])-1))
+		idx = collect(((6*snp)-5):(6*snp))
 		alpha_out[idx] = OUT[1]
 		allele_id[idx] = OUT[2]
 		locus_id[idx] = OUT[3]
@@ -168,12 +238,7 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 	ALLELE_FREQ = allele_freq[locus_w_eff .== 1]
 
 	### estimate heuristic p-values
-	# alpha_mean = mean(ALPHA_OUT[LOCUS_W_EFF .== 1])
-	# alpha_sd = std(ALPHA_OUT[LOCUS_W_EFF .== 1])
-	# P_VALUES = ones(length(LOCUS_ID))
-	# P_VALUES[LOCUS_W_EFF .== 1] .= [pval_Normal(x, alpha_mean, alpha_sd) for x in ALPHA_OUT[LOCUS_W_EFF .== 1]]
-	# LOD = -Distributions.log.(10, P_VALUES)
-	P_VALUES, LOD = pval_heuristic_module.estimate_PVAL_and_LOD(convert(Array{Float64,1}, ALPHA_OUT))
+	P_VALUES, LOD = significance_testing_module.estimate_pval_lod(convert(Array{Float64,1}, ALPHA_OUT))
 	### output
 	ALLELE_ID = repeat(["N"], inner=length(ALLELE_ID_INT))
 	for i in 1:length(ALLELE_ID) #convert int allele ID into corresponting A, T, C, G, N, DEL
@@ -185,8 +250,8 @@ function GWAlpha_ML_parallel(filename_sync::String, filename_phen_py::String, MA
 		elseif ALLELE_ID_INT[i] == 6; ALLELE_ID[i] = "DEL"
 		end
 	end
-	OUT = DataFrames.DataFrame(LOCUS_ID=LOCUS_ID, CHROM=SYNC[LOCUS_ID,1], POS=SYNC[LOCUS_ID,2], ALLELE=ALLELE_ID, FREQ=ALLELE_FREQ, ALPHA=ALPHA_OUT, PVALUES=P_VALUES, LOD=LOD)
+	OUT = (CHROM=convert(Array{Any,1},SYNC[LOCUS_ID,1]), POS=convert(Array{Int64,1},SYNC[LOCUS_ID,2]), ALLELE=convert(Array{Any,1},ALLELE_ID), FREQ=convert(Array{Float64,1},ALLELE_FREQ), ALPHA=convert(Array{Float64},ALPHA_OUT), PVALUES=convert(Array{Float64},P_VALUES), LOD=convert(Array{Float64},LOD))
 	return(OUT)
 end
 
-end
+end # end of GWAlpha_ML_module
