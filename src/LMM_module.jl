@@ -5,7 +5,6 @@ using LinearAlgebra
 using Distributions
 using Optim
 using RCall
-R"library(glmnet)"
 
 #####################
 ### Sub-functions ###
@@ -124,7 +123,7 @@ function BLUE_glmnet(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V=nothing, a
 	@rput y;
 	@rput alfa;
 	@rput lambda;
-	R"glmnet_out = glmnet(x=X, y=y, alpha=alfa, intercept=FALSE, lambda=lambda)";
+	R"glmnet_out = glmnet::glmnet(x=X, y=y, alpha=alfa, intercept=FALSE, lambda=lambda)";
 	R"b_hat = as.numeric(glmnet_out$beta)";
 	# R"y_pred = X%*%b_hat"
 	# R"cbind(y, y_pred)"
@@ -327,7 +326,7 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 		@rput X;
 		@rput y;
 		@rput alfa;
-		R"lambda = cv.glmnet(x=X, y=y, alpha=alfa, intercept=FALSE)$lambda.min";
+		R"lambda = glmnet::cv.glmnet(x=X, y=y, alpha=alfa, intercept=FALSE)$lambda.min";
 		@rget lambda; ### expediting computations with a fixed lambda for GLMNET
 	else
 		lambda = 1.00
