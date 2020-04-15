@@ -16,7 +16,7 @@ The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙ
 - Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
 - W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
 
-Empirical p-values were calculated by modelling the additive effects (α) using a normal distribution using maximum likelihood mean and variance parameter estimation.
+Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with maximum likelihood mean and variance parameter estimation.
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
 - X [n,p] is the centered matrix of allele frequencies
