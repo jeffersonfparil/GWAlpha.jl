@@ -76,7 +76,7 @@ GWAlpha.PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.0
 	200.0,0.31328530259365983
 ```
 3. *maf* [Float64]: minimum allele frequency threshold (default=0.001)
-4. *depth* [Float64]: minimum sequencing depth threshold (default=1)
+4. *depth* [Int64]: minimum sequencing depth threshold (default=1)
 5. *model* [String]: GPAS model to use (default="GWAlpha")
 	- "GWAlpha" - iterative maximum likelihood estimation
 	- "ML_LS" - linear mixed model using maximum likelihood estimation of variances and least squares estimation of fixed effects (additive allelic effects)
@@ -140,7 +140,7 @@ using GWAlpha
 ## Contents
 - original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/legacy)
 - Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/src)
-- testing scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/test)
+- test scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/test)
 
 ## Citations
 

@@ -60,7 +60,7 @@ GLMNET cross-validation to find the optimum tuning parameter (λ) was performed 
 	200.0,0.31328530259365983
 ```
 3. *maf* [Float64]: minimum allele frequency threshold (default=0.001)
-4. *depth* [Float64]: minimum sequencing depth threshold (default=1)
+4. *depth* [Int64]: minimum sequencing depth threshold (default=1)
 5. *model* [String]: GPAS model to use (default="GWAlpha")
 	- "GWAlpha" - iterative maximum likelihood estimation
 	- "ML_LS" - linear mixed model using maximum likelihood estimation of variances and least squares estimation of fixed effects (additive allelic effects)
