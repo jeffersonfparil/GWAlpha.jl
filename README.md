@@ -123,7 +123,7 @@ using GWAlpha
 @time OUT_REML_LS_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_LS", random_covariate="RELATEDNESS", fpr=0.01, plot=true)
 @time OUT_REML_GLMNET_FST = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
 @time OUT_REML_GLMNET_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
-### Multi-thread execution (parallel execution only applicable to model=="GWAlpha"):
+### Multi-thread execution (parallel execution only applicable to model="GWAlpha"):
 using Distributed
 Distributed.addprocs(length(Sys.cpu_info())-1)
 @everywhere using GWAlpha
@@ -131,7 +131,7 @@ Distributed.addprocs(length(Sys.cpu_info())-1)
 ```
 
 ## More details
-Open julia, load the GWAlpha library,
+Open Julia, load the GWAlpha library,
 ```julia
 using GWAlpha
 ?GWAlpha.PoolGPAS
