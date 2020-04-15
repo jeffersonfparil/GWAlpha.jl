@@ -17,26 +17,28 @@ include("significance_testing_module.jl")
 
 Build genomic prediction models and perform genome-wide association (collectively abbreviated as GPAS) on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
 
-The GWAlpha model is defined as α = W*(μ[allele]-μ[alternative])/σ[y], where:
-	- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
-	- θ is estimated via maximum likelihood L(θ|Q) = π[i=1->k]f(q[i]|θ)
-	- Q = {q₁,...,q[k]} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
-	- E(allele|θ) = Beta_cdf(y[i]',θ) - Beta_cdf(y[i-1]',θ), where y[i]' ∈ Y'
-	- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
-	- W = 2*sqrt(E(allele)*(1-E(allele))) is the penalization for low allele frequency
+The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
+- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
+- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
+- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
+- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
+- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
+- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
+
 Empirical p-values were calculated by modelling the additive effects (α) using a normal distribution using maximum likelihood mean and variance parameter estimation.
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
-	- X [n,p] is the centered matrix of allele frequencies
-	- Z [n,n] is the square symmetric matrix of relatedness
-	- y [n,1] is the centered vector of phenotypic values
-	- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
-	- u ~ N(0, σ²uI)
-	- e ~ N(0, σ²eI)
-	- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
-	- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-	- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
-	- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+- X [n,p] is the centered matrix of allele frequencies
+- Z [n,n] is the square symmetric matrix of relatedness
+- y [n,1] is the centered vector of phenotypic values
+- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
+- u ~ N(0, σ²uI)
+- e ~ N(0, σ²eI)
+- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
+- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
+- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
+- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+
 GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
 
 # Inputs
@@ -77,18 +79,18 @@ GLMNET cross-validation to find the optimum tuning parameter (λ) was performed 
 
 # Outputs
 1. Additive allelic effects array (header: CHROM, POS, ALLELE, FREQ, ALPHA, PVALUES, LOD) written into a comma-separated (.csv) file
-	- "GWAlpha": string(join(split(filename_sync, ".")[1:(end-1)], '.'), "-GWAlpha-OUTPUT.csv")
-	- ["ML". "REML"]_["LS", "GLMNET"]: string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-OUTPUT.csv")
+	- "GWAlpha": `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "-GWAlpha-OUTPUT.csv")`
+	- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-OUTPUT.csv")`
 2. Random covariate effects vector (headerless: RANDOM_EFFECTS) written into a comma-separated (.csv) file
 	- "GWAlpha": nothing
-	- ["ML". "REML"]_["LS", "GLMNET"]: string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-RANEF-OUTPUT.csv")
+	- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-RANEF-OUTPUT.csv")`
 3. Manhattan and QQ plots in .png format
-	- string(join(split(filename_output_csv, ".")[1:(end-1)], '.'), ".png")
+	- `string(join(split(filename_output_csv, ".")[1:(end-1)], '.'), ".png")`
 4. Parsing, filtering, and relatedness matrix outputs:
-	- Parsed sync data into a .csv file of allele frequency data (headerless: CHROM, POS, ALLELE, FREQ_POOL1, ..., FREQ_POOLn): string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
-	- Filtered sync data into a sync file: filename_sync_filtered = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")
-	- Boolean indices of sync filtering across loci*6 alleles (A:T:C:G:N:DEL) (headerless: IS_INCLUDED): string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, "_IDX_OUT.txt")
-	- Pairwise pool relatedness (square, symmetric and headerless): string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_COVARIATE_", random_covariate, ".csv")
+	- Parsed sync data into a .csv file of allele frequency data (headerless: CHROM, POS, ALLELE, FREQ_POOL1, ..., FREQ_POOLn): `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
+	- Filtered sync data into a sync file: filename_sync_filtered = `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")`
+	- Boolean indices of sync filtering across loci*6 alleles (A:T:C:G:N:DEL) (headerless: IS_INCLUDED): `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, "_IDX_OUT.txt")`
+	- Pairwise pool relatedness (square, symmetric and headerless): `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_COVARIATE_", random_covariate, ".csv")`
 
 # Examples
 ```
