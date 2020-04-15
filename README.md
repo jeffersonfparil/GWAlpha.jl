@@ -8,13 +8,14 @@
 
 A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association (collectively abbreviated as GPAS) on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
 
-The GWAlpha model is defined as α = W*(μ[allele]-μ[alternative])/σ[y], where:
-	- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
-	- θ is estimated via maximum likelihood L(θ|Q) = π[i=1->k]f(q[i]|θ)
-	- Q = {q₁,...,q[k]} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
-	- E(allele|θ) = Beta_cdf(y[i]',θ) - Beta_cdf(y[i-1]',θ), where y[i]' ∈ Y'
-	- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
-	- W = 2*sqrt(E(allele)*(1-E(allele))) is the penalization for low allele frequency
+The GWAlpha model is defined as α = W*(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
+- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
+- θ is estimated via maximum likelihood L(θ|Q) = πᵢ₌₁₋ₖf(qᵢ|θ)
+- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
+- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
+- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
+- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
+
 Empirical p-values were calculated by modelling the additive effects (α) using a normal distribution using maximum likelihood mean and variance parameter estimation.
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
