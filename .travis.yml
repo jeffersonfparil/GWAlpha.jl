@@ -33,4 +33,3 @@ before_install:
   - echo -e 'R_LIBS=~/R_packages_test/' > ~/.Renviron
   - Rscript -e "install.packages('glmnet', verbose=FALSE)"
   - Rscript -e "install.packages('RColorBrewer', verbose=FALSE)"
-  - Rscript -e "install.packages('remotes', verbose=FALSE); remotes::install_github('sahirbhatnagar/ggmix')"
