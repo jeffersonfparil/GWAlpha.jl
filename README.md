@@ -10,7 +10,7 @@ A [Julia](https://julialang.org/downloads/) package for building genomic predict
 
 The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
 - μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
-- θ is estimated via maximum likelihood L(θ|Q) = πᵢ₌₁₋ₖf(qᵢ|θ)
+- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
 - Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
 - E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
 - Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
