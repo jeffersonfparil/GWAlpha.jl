@@ -8,7 +8,7 @@
 
 A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association (collectively abbreviated as GPAS) on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
 
-The GWAlpha model is defined as α = W*(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
+The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
 - μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
 - θ is estimated via maximum likelihood L(θ|Q) = πᵢ₌₁₋ₖf(qᵢ|θ)
 - Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
@@ -19,16 +19,17 @@ The GWAlpha model is defined as α = W*(μₐₗₗₑₗₑ-μₐₗₜₑᵣ�
 Empirical p-values were calculated by modelling the additive effects (α) using a normal distribution using maximum likelihood mean and variance parameter estimation.
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
-	- X [n,p] is the centered matrix of allele frequencies
-	- Z [n,n] is the square symmetric matrix of relatedness
-	- y [n,1] is the centered vector of phenotypic values
-	- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
-	- u ~ N(0, σ²uI)
-	- e ~ N(0, σ²eI)
-	- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
-	- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-	- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
-	- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+- X [n,p] is the centered matrix of allele frequencies
+- Z [n,n] is the square symmetric matrix of relatedness
+- y [n,1] is the centered vector of phenotypic values
+- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
+- u ~ N(0, σ²uI)
+- e ~ N(0, σ²eI)
+- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
+- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
+- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
+- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+
 GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
 
 ## Installation
