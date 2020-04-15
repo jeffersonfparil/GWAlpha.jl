@@ -1,7 +1,5 @@
 module relatedness_module
 
-using CSV
-using DataFrames
 using Statistics
 using DelimitedFiles
 include("sync_processing_module.jl")
@@ -9,27 +7,26 @@ include("sync_processing_module.jl")
 #####################
 ### Sub-functions ###
 #####################
-### Weir & Cockerham, 1984
-function Fst_weir1984_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64,1}, window_size::Int64)
+### [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
+function Fst_weir1984_func(sync::Array{Any,2}, pool_sizes::Array{Int64,1}, window_size::Int64)
     CHROM=[]; WINDOW=[]; FST=[]
-    for chrom in DataFrames.levels(sync.Column1)
+    for chrom in unique(sync[:,1])
         # test
         # chrom = 1
-        subsync = sync[sync.Column1 .== chrom, :]
-        nWindows = convert(Int, ceil(maximum(subsync.Column2) / window_size))
+        subsync = sync[sync[:,1] .== chrom, :]
+        nWindows = convert(Int, ceil(maximum(subsync[:,2]) / window_size))
         for window in 1:nWindows
-            # test ### NEED TO DEAL WITH ZERO AND ONE LOCUS windowsync DATAFRAMES!!!!! 20190620
             # window = 1
             # println(chrom)
             # println(window)
             # println("#######################")
             _start_ = window_size*(window-1) + 1
             _end_ = window_size*(window)
-            windowsync = subsync[(subsync.Column2 .>= _start_) .& (subsync.Column2 .<= _end_), :]
-            if (nrow(windowsync) != 0)
-                l = DataFrames.nrow(windowsync)     #number of loci in this window
+            windowsync = subsync[(subsync[:,2] .>= _start_) .& (subsync[:,2] .<= _end_), :]
+            if (size(windowsync,1) != 0)
+                l = size(windowsync,1)     #number of loci in this window
                 a = 6                               #number of alleles which is 6 for the sync formal
-                r = DataFrames.ncol(windowsync) - 3 #number of pools or subpopulations or populations in the sync file
+                r = size(windowsync,2) - 3 #number of pools or sub-populations or populations in the sync file
                 p_3d = Array{Float64}(undef, l, a, r)
                 for pop in 1:r
                     for locus in 1:l
@@ -51,10 +48,10 @@ function Fst_weir1984_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64,1
                 n_3d = reshape(repeat(pool_sizes, inner=l*a), (l,a,r))
                 p_bar_2d = sum(n_3d .* p_3d, dims=3) ./ (r*n_bar)
                 s_sq_2d = sum(n_3d .* ((p_3d .- p_bar_2d) .^ 2), dims=3) ./ (n_bar*(r-1))
-                # bulting the HWE-based P(heterozygotes)
+                # building the HWE-based P(heterozygotes)
                 h_3d = 2 .* p_3d .* (1 .- p_3d)
                 h_bar_2d = sum(n_3d .* h_3d, dims=3) ./ (r * n_bar)
-                # calculte the components of Fst
+                # calculate the components of Fst
                 a_2d = (n_bar/n_c) * ( (s_sq_2d) - ((1/(n_bar-1)) .* ( (p_bar_2d .* (1 .- p_bar_2d)) .- (((r-1)/r) .* s_sq_2d) .- (h_bar_2d ./ 4) )) )
                 b_2d = (n_bar/(n_bar-1)) .* ( (p_bar_2d.* (1 .- p_bar_2d)) .- (((r-1)/r) .* s_sq_2d) .- ((((2*n_bar)-1)/(4*n_bar)) .* h_bar_2d) )
                 c_2d = h_bar_2d ./ 2
@@ -62,9 +59,6 @@ function Fst_weir1984_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64,1
                 if sum(a_2d) <= 0.0 #for Fst values less than or equal to zero are essentially zero, i.e. Fst = (H_between - H_within) / H_between; --> H_between </= H_within
                     Fst = 0.0
                     append!(FST, Fst)
-                # elseif (sum(a_2d) == 0)
-                #     Fst = 0.0
-                #     append!(FST, Fst)
                 else
                     Fst = sum(a_2d) / sum( a_2d .+ b_2d .+ c_2d )
                     append!(FST, Fst)
@@ -75,31 +69,31 @@ function Fst_weir1984_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64,1
         end #window
     end #chrom
     OUT_Fst = try
-                DataFrames.DataFrame(chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+                hcat((chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))...)
             catch
-                DataFrames.DataFrame(chr=convert(Array{String},string.(CHROM)), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+                hcat((chr=convert(Array{String},string.(CHROM)), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))...)
             end
     return(OUT_Fst)
 end
 
-### Hiver et al, 2018 method
-function Fst_hivert2018_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64,1}, window_size::Int64)
+### [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf)
+function Fst_hivert2018_func(sync::Array{Any,2}, pool_sizes::Array{Int64,1}, window_size::Int64)
     CHROM=[]; WINDOW=[]; FST=[]
-    for chrom in DataFrames.levels(sync.Column1)
+    for chrom in unique(sync[:,1])
         # # test:
         # chrom = 1
-        subsync = sync[sync.Column1 .== chrom, :]
-        nWindows = convert(Int, ceil(maximum(subsync.Column2) / window_size))
+        subsync = sync[sync[:,1] .== chrom, :]
+        nWindows = convert(Int, ceil(maximum(subsync[:,2]) / window_size))
         for window in 1:nWindows
             # # test:
             # window = 2
             _start_ = window_size*(window-1) + 1
             _end_ = window_size*(window)
-            windowsync = subsync[(subsync.Column2 .>= _start_) .& (subsync.Column2 .<= _end_), :]
-            if (nrow(windowsync) != 0)
-                l = DataFrames.nrow(windowsync)     #number of loci in this window
+            windowsync = subsync[(subsync[:,2] .>= _start_) .& (subsync[:,2] .<= _end_), :]
+            if (size(windowsync,1) != 0)
+                l = size(windowsync,1)     #number of loci in this window
                 a = 6                               #number of alleles which is 6 for the sync formal
-                r = DataFrames.ncol(windowsync) - 3 #number of pools or subpopulations or populations in the sync file
+                r = size(windowsync,2) - 3 #number of pools or sub-populations or populations in the sync file
                 c_3d = Array{Int64}(undef, l, a, r)
                 p_3d = Array{Float64}(undef, l, a, r)
                 for pop in 1:r
@@ -126,7 +120,7 @@ function Fst_hivert2018_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64
                 Fst = sum( MSP_k .- MSI_k ) / sum( MSP_k .+ ((nc-1) .* MSI_k) )
                 if sum( MSP_k .+ ((nc-1) .* MSI_k) ) == 0.0 ### zero denominator indicating ZERO DIFFERENTIATON!
                     Fst = 0.0
-                elseif (Fst < 0.0) ### negative Fst intepreted as zero!
+                elseif (Fst < 0.0) ### negative Fst interpreted as zero!
                     Fst = 0.0
                 end
                 append!(FST, Fst)
@@ -136,9 +130,9 @@ function Fst_hivert2018_func(sync::DataFrames.DataFrame, pool_sizes::Array{Int64
         end #window
     end #chrom
     OUT_Fst = try
-                DataFrames.DataFrame(chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+                hcat((chr=convert(Array{String},CHROM), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))...)
             catch
-                DataFrames.DataFrame(chr=convert(Array{String},string.(CHROM)), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))
+                hcat((chr=convert(Array{String},string.(CHROM)), window=convert(Array{Int64},WINDOW), Fst=convert(Array{Float64},FST))...)
             end
     return(OUT_Fst)
 end
@@ -177,10 +171,10 @@ function Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::A
     println("#################################################################################################")
     println("Fst estimation across pools:")
     ### load the sync allele frequency data
-    sync = CSV.read(sync_fname, delim="\t", datarow=1)
+    sync = DelimitedFiles.readdlm(sync_fname)
     ### input parameters
-    nPools = DataFrames.ncol(sync)  - 3
-    nLoci = DataFrames.nrow(sync)
+    nPools = size(sync,2)  - 3
+    nLoci = size(sync,1)
     println(string("Synchronized pileup file: ", sync_fname))
     println(string("Non-overlapping window size: ", window_size, " bp"))
     println(string("Number of pools: ", nPools))
@@ -201,12 +195,15 @@ function Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::A
     Fst_data_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")
     Fst_sumstats_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")
     println(string("(1/2) ", Fst_data_out_fname, " for the Fst per chromosome per locus."))
-    println(string("(2/2) ", Fst_sumstats_out_fname, " for the summary statistics of Fst acros chromosomes and loci (i.e. mean, min, max and var)."))
+    println(string("(2/2) ", Fst_sumstats_out_fname, " for the summary statistics of Fst across chromosomes and loci (i.e. mean, min, max and var)."))
     println("#################################################################################################")
     ### performing a Shapiro-Wilk's test for normality shows that the Fst across windows is normally distributed!
-    SUMSTATS_Fst = DataFrames.DataFrame(mean_Fst=Statistics.mean(OUT_Fst.Fst[.!isnan.(OUT_Fst.Fst)]), min_Fst=Statistics.minimum(OUT_Fst.Fst[.!isnan.(OUT_Fst.Fst)]), max_Fst=Statistics.maximum(OUT_Fst.Fst[.!isnan.(OUT_Fst.Fst)]), var_Fst=Statistics.var(OUT_Fst.Fst[.!isnan.(OUT_Fst.Fst)]))
-    CSV.write(Fst_data_out_fname, OUT_Fst, delim=",")
-    CSV.write(Fst_sumstats_out_fname, SUMSTATS_Fst, delim=",")
+    SUMSTATS_Fst = (mean_Fst=Statistics.mean(OUT_Fst[.!isnan.(OUT_Fst[:,3]),3]), min_Fst=Statistics.minimum(OUT_Fst[.!isnan.(OUT_Fst[:,3]),3]), max_Fst=Statistics.maximum(OUT_Fst[.!isnan.(OUT_Fst[:,3]),3]), var_Fst=Statistics.var(OUT_Fst[.!isnan.(OUT_Fst[:,3]),3]))
+    ### write-out
+    writedlm(Fst_data_out_fname, reshape(["CHROM", "POS", "FST"],1,3), ',') ### write header
+    io = open(Fst_data_out_fname, "a"); writedlm(io, OUT_Fst, ','); close(io) ### append the column-binded GWAlpha output
+    writedlm(Fst_sumstats_out_fname, reshape(vcat(string.(keys(SUMSTATS_Fst))...), 1, length(SUMSTATS_Fst)), ',') ### write header
+    io = open(Fst_sumstats_out_fname, "a"); writedlm(io, hcat(SUMSTATS_Fst...), ','); close(io) ### append the column-binded GWAlpha output
     return(0)
 end
 
@@ -240,10 +237,10 @@ function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array
     println("#################################################################################################")
     println("Pairwise Fst estimation:")
     ### load the sync allele frequency data
-    sync = CSV.read(sync_fname, delim="\t", datarow=1)
+    sync = DelimitedFiles.readdlm(sync_fname)
     ### input parameters
-    nPools = DataFrames.ncol(sync)  - 3
-    nLoci = DataFrames.nrow(sync)
+    nPools = size(sync,2)  - 3
+    nLoci = size(sync,1)
     println(string("Synchronized pileup file: ", sync_fname))
     println(string("Non-overlapping window size: ", window_size, " bp"))
     println(string("Number of pools: ", nPools))
@@ -258,10 +255,10 @@ function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array
         for j in (i+1):nPools
             sub = sync[:, [1,2,3,(3+i), (3+j)]]
             if METHOD == "WeirCock"
-                Fst = Fst_weir1984_func(sub, pool_sizes[[i,j]], window_size).Fst
+                Fst = Fst_weir1984_func(sub, pool_sizes[[i,j]], window_size)[:,3]
                 PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
             elseif METHOD == "Hivert"
-                Fst = Fst_hivert2018_func(sub, pool_sizes[[i,j]], window_size).Fst
+                Fst = Fst_hivert2018_func(sub, pool_sizes[[i,j]], window_size)[:,3]
                 PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
             else
                 println(string("AwWwwW! SowWwWyyyy! We have not implemented the Pool-seq Fst calculation method: ", model, " yet."))
@@ -286,7 +283,6 @@ Compute a simple standardized relatedness matrix XX'/p, where X is the allele fr
 
 # Input
 1. *sync_fname*: synchronized pileup filename
-
 
 # Output
 Standardized relatedness matrix with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_RELATEDNESS.csv")`

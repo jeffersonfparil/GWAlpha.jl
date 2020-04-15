@@ -118,7 +118,7 @@ function GWAlpha_ML_iterator(COUNTS::SharedArray{Int64,3}, snp::Int64, BINS::Arr
 					catch
 						try
 							Optim.optimize(beta->neg_log_likelihood_cdfbeta(beta, percA, percB), lower_limits, upper_limits, initial_values)
-						catch ### lower limits of 1e-20 to 1e-6 causes beta dist parameter values to shrink to zero somehow - so we'r'e setting lower limits to 1e-5 instead
+						catch ### lower limits of 1e-20 to 1e-6 causes beta dist parameter values to shrink to zero somehow - so we're setting lower limits to 1e-5 instead
 							lower_limits = [1e-5, 1e-5, 1e-5, 1e-5]
 							Optim.optimize(beta->neg_log_likelihood_cdfbeta(beta, percA, percB), lower_limits, upper_limits, initial_values)
 						end
@@ -178,7 +178,7 @@ function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float
 	phen = DelimitedFiles.readdlm(filename_phen_py)
 
 	### gather phenotype specifications
-	NPOOLS = length(split(phen[5], ['=', ',', '[', ']', ';'])) - 3 #less the first leading and trailing elemenets
+	NPOOLS = length(split(phen[5], ['=', ',', '[', ']', ';'])) - 3 #less the first leading and trailing elements
 	if length(split(phen[1], ['=', '\"'])) < 3
 		global NAME = split(phen[1], ['=', '\''])[3]
 	else
@@ -191,7 +191,7 @@ function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float
 	QUAN = parse.(Float64, split(phen[6], ['=', ',', '[', ']', ';'])[3:(NPOOLS+1)])
 	BINS = append!([x for x in PERC], 1) - append!(zeros(1), PERC)
 
-	### gather genotype (allele frequency) specificications
+	### gather genotype (allele frequency) specifications
 	NSNP = size(SYNC)[1]
 	n_pools_sync = size(SYNC)[2] - 3
 	if NPOOLS != n_pools_sync
@@ -211,7 +211,7 @@ function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float
 		COUNTS[i,:,:] = parse.(Int64, hcat(split.(SYNC[:, 4:(NPOOLS+3)], [':'])[:, i]...))
 		ProgressMeter.update!(progress_bar, i)
 	end
-	### ouput shared arrays
+	### output shared arrays
 	alpha_out = SharedArrays.SharedArray{Float64,1}(NSNP*6)
 	allele_id = SharedArrays.SharedArray{Int64,1}(NSNP*6)
 	locus_id = SharedArrays.SharedArray{Int64,1}(NSNP*6)
@@ -241,7 +241,7 @@ function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float
 	P_VALUES, LOD = significance_testing_module.estimate_pval_lod(convert(Array{Float64,1}, ALPHA_OUT))
 	### output
 	ALLELE_ID = repeat(["N"], inner=length(ALLELE_ID_INT))
-	for i in 1:length(ALLELE_ID) #convert int allele ID into corresponting A, T, C, G, N, DEL
+	for i in 1:length(ALLELE_ID) #convert int allele ID into corresponding A, T, C, G, N, DEL
 		if ALLELE_ID_INT[i] == 1; ALLELE_ID[i] = "A"
 		elseif ALLELE_ID_INT[i] == 2; ALLELE_ID[i] = "T"
 		elseif ALLELE_ID_INT[i] == 3; ALLELE_ID[i] = "C"

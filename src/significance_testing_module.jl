@@ -1,6 +1,5 @@
 module significance_testing_module
 
-using DataFrames
 using Distributions
 using Statistics
 using RCall
@@ -13,7 +12,7 @@ using RCall
 
 Determine the best fitting distribution to model the data and heuristically estimate the p-values.
 
-# Ditributions
+# Distributions
 - [Bernoulli](https://en.wikipedia.org/wiki/Bernoulli_distribution)
 - [Beta](https://en.wikipedia.org/wiki/Beta_distribution)
 - [Binomial](https://en.wikipedia.org/wiki/Binomial_distribution)
@@ -49,13 +48,13 @@ function best_fitting_distribution(data::Array{Float64,1})
     DIST_INSTANCES = [try Distributions.fit_mle(D, data); catch nothing; end for D in DIST_NAMES]
     NEG_LOGLIK = [try -sum(Distributions.logpdf.(D, data)); catch nothing; end for D in DIST_INSTANCES]
     # NEG_LOGLIK = [try sum(Distributions.pdf.(D, data)); catch nothing; end for D in DIST_INSTANCES]
-    DISTRIBUTIONS_DF = DataFrames.DataFrame(NAME=DIST_NAMES[NEG_LOGLIK .!= nothing],
-                                            INSTANCE=DIST_INSTANCES[NEG_LOGLIK .!= nothing],
-                                            NEG_LOGLIK=convert(Array{Float64,1}, NEG_LOGLIK[NEG_LOGLIK .!= nothing]))
+    DISTRIBUTIONS_DF = hcat((DIST_NAMES[NEG_LOGLIK .!= nothing],
+                            DIST_INSTANCES[NEG_LOGLIK .!= nothing],
+                            NEG_LOGLIK[NEG_LOGLIK .!= nothing])...)
     D = try
-        DISTRIBUTIONS_DF.INSTANCE[argmin(DISTRIBUTIONS_DF.NEG_LOGLIK)]
+        (DISTRIBUTIONS_DF[argmin(DISTRIBUTIONS_DF[:,3]), 2], DISTRIBUTIONS_DF[argmin(DISTRIBUTIONS_DF[:,3]), 1])
     catch
-        nothing
+        (nothing, "Failure to fit into any of the distributions tested.")
     end
     return(D)
 end
@@ -85,7 +84,8 @@ UnicodePlots.scatterplot(LOD)
 ```
 """
 function estimate_pval_lod(data::Array{Float64,1})
-    D = best_fitting_distribution(data)
+    D, D_name = best_fitting_distribution(data)
+    println(string("Distribution used: ", D_name))
     if (D == nothing) | (std(data) == 0)
         PVAL = repeat([1.0], inner=length(data))
         LOD = PVAL .- 1.0
@@ -101,10 +101,15 @@ end
 # _______________________________________________________________________________________________
 # Plot -log10(p-values) with a given Bonferroni threshold at user-defined false positive rate (α)
 
-`plot_manhattan(;gwas_out::DataFrames.DataFrame, fpr::Float64=0.01, png_fname::String=string("Manhattan_plot-", hash(rand()), ".jpeg"))`
+`plot_manhattan(;chrom::Array{Any,1}, pos::Array{Int64,1}, pval::Array{Float64,1}, lod::Array{Float64,1}, fpr::Float64=0.01, png_fname::String=string("Manhattan_plot-", hash(rand()), ".jpeg"))`
 
 # Inputs
-1. gwas_out
+1. *chrom* [Array{Any,1}]: vector of chromosome names
+2. *pos* [Array{Int64,1}]: vector of allele/SNP positions in base-pairs
+3. *pval* [Array{Float64,1}]: vector of p-values
+4. *lod* [Array{Float64,1}]: vector of -log10(p-values)
+5. *fpr* [Float64=0.01]: false positive rate threshold or the alpha (default=0.01)
+6. *png_fname* [String]: output filename of the Manhattan plot in portable network format (png) (default=string("Manhattan_plot-", hash(rand()), ".jpeg"))
 
 # Output
 1. Manhattan plot in portable network graphics (png) format
@@ -112,13 +117,15 @@ end
 # Examples
 ```
 using Distributions
-x1 = Distributions.rand(Distributions.Normal(0, 1), 100)
-PVAL, LOD = pval_heuristic_module.estimate_PVAL_and_LOD(x1)
-DataFrames.DataFrame(LOCUS_IDX=vcat([0], LOCI), CHROM=CHROM, POS=POS, ALLELE=ALLELE_ID, FREQ=ALLELE_FREQ, BETA=vcat([INTERCEPT], EFF), PVALUES=vcat([NaN], P_VALUES), LOD=vcat([NaN], LOD))
-plot_manhattan
+chrom = repeat([1,2,3,"X", "Z"], inner=20)
+pos = repeat(collect(1:20), outer=5)
+eff = Distributions.rand(Distributions.Normal(0, 1), 100)
+eff[[10,30,60,90]] = [10.0,20.0,30.0,40.0]
+pval, lod = significance_testing_module.estimate_pval_lod(eff)
+significance_testing_module.plot_manhattan(chrom=chrom, pos=pos, pval=pval, lod=lod)
 ```
 """
-function plot_manhattan(;chrom::Array{Any,1}, pos::Array{Int64,1}, pval::Array{Float64,1}, lod::Array{Float64,1}, fpr::Float64=0.01, png_fname::String=string("Manhattan_plot-", hash(rand()), ".jpeg"))
+function plot_manhattan(;chrom::Array{Any,1}, pos::Array{Int64,1}, pval::Array{Float64,1}, lod::Array{Float64,1}, fpr::Float64=0.01, png_fname::String=string("Manhattan_plot-", hash(rand()), ".png"))
 	### plot in R
     @rput chrom;
     @rput pos;

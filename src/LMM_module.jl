@@ -92,7 +92,7 @@ Jerome Friedman, Trevor Hastie, Rob Tibshirani that fits entire Lasso or Elastic
 2. *y* [Array{Float64,1}]: vector of phenotypes
 3. *inv_V* [Array{Any,2}]: inverse of the variance-covariance matrix of the phenotypes (e.g. LMM_module.inverse(Z*(σ2u*I)*Z')+(σ2e*I)) (default=nothing)
 4. *alfa* [Float64]: elastic penalty parameter ranging from 0.00 for L2-norm penalization (ridge) up to 1.00 for L1-norm penalization (LASSO) (default=0.00)
-5. *lambda* [Float64]: shinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
+5. *lambda* [Float64]: shrinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
 
 # Output
 1. Least squares estimate of the fixed effects of X
@@ -140,10 +140,19 @@ end
 
 `LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0, lambda::Float64=1.00, OPTIMIZE::Bool=true, VARFIXEF::Bool=false)`
 
-The mixed linear model is defines as y = Xb + Zu + e, where:
-	- u ~ N(0, σ2uI)
-	- e ~ N(0, σ2eI)
-	- y ~ (Z (σ2uI) Z') + (σ2eI)
+The mixed linear model is defined as y = Xb + Zu + e, where:
+	- X [n,p] is the centered matrix of allele frequencies
+	- Z [n,n] is the square symmetric matrix of relatedness
+	- y [n,1] is the centered vector of phenotypic values
+	- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
+	- u ~ N(0, σ²uI)
+	- e ~ N(0, σ²eI)
+	- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
+	- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
+	- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
+	- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+
+GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
 
 # Inputs
 1. parameters [Array{Float64,1}]: the error variance (σ2e) and random effects variance (σ2u)
@@ -153,7 +162,7 @@ The mixed linear model is defines as y = Xb + Zu + e, where:
 5. *METHOD_VAR_EST* [String]: method of variance parameter estimation choose "ML" for maximum likelihood or "REML" for restricted maximum likelihood (default="ML")
 6. *METHOD_FIX_EST* [String]: method of fixed effects estimation choose "LS" for least squares or "GLMNET" for elastic-net penalty (default="LS")
 7. *alfa* [Float64]: elastic penalty parameter ranging from 0.00 for L2-norm penalization (ridge) up to 1.00 for L1-norm penalization (LASSO) (default=0.00)
-8. *lambda* [Float64]: shinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
+8. *lambda* [Float64]: shrinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
 9. *OPTIMIZE* [Bool]: logical value to perform optimization to find estimate the variance parameters if TRUE or to estimate the fixed and random effects if FALSE (default=true)
 10. *VARFIXEF* [Bool]: logical value to estimate the variances of the fixed effects which can be computationally and memory intensive for large datasets (default=false)
 
@@ -257,13 +266,16 @@ end
 
 `LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0)`
 
-The mixed linear model is defines as y = Xb + Zu + e, where:
-	- no intercept was fitted
+The mixed linear model is defined as y = Xb + Zu + e, where:
+	- no intercept is fitted
 	- X is centered
 	- y is centered which means the intercept is automatically the mean of y
+	- Z is a square symmetric matrix of relatedness
 	- u ~ N(0, σ2uI)
 	- e ~ N(0, σ2eI)
 	- y ~ (Z (σ2uI) Z') + (σ2eI)
+
+GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
 
 # Inputs
 1. *X* [Array{Float64,2}; xij ∈ [0.00, 1.00]]: matrix of allele frequencies (Pool-seq data) set as the fixed effects
@@ -321,7 +333,7 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 		lambda = 1.00
 	end
 	# optim_out = Optim.optimize(VeVu -> LMM_optim(VeVu, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=true), lower_limit, upper_limit, initial_VeVu)
-	### Optimization in julia 1.0 is too darn slow! Going with R then! Importing julia functions and variables into R.
+	### Optimization in Julia 1.0 is too darn slow! Going with R then! Importing Julia functions and variables into R.
 	@rput inverse;
 	@rput BLUE_least_squares;
 	@rput BLUE_glmnet;
@@ -339,7 +351,7 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 	R"optim_out = optim(par=initial_VeVu, fn=LMM_optim, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=TRUE, method='L-BFGS-B', lower=lower_limit, upper=upper_limit)"
 	@rget optim_out;
 	Ve, Vu = optim_out[:par]
-	### Fixed effects (b), random effects (u), and fixed effects varaince (Vb) estimation (NOTE: No need to back-transform these estimated effects because we simply centered the explanatory variables meaning they're still on the same space)
+	### Fixed effects (b), random effects (u), and fixed effects variance (Vb) estimation (NOTE: No need to back-transform these estimated effects because we simply centered the explanatory variables meaning they're still on the same space)
 	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=false)
 	### Output
 	return (b0=uy, b=b, u=u)

@@ -1,8 +1,6 @@
 module sync_processing_module
 
 using DelimitedFiles
-using DataFrames
-using CSV
 using Statistics
 using ProgressMeter
 
@@ -39,7 +37,7 @@ function sync_filter(;filename_sync::String, MAF::Float64=0.001, DEPTH::Int64=0)
 		### load the sync and phenotype files
 		sync = DelimitedFiles.readdlm(filename_sync, '\t')
 
-		### gather genotype (allele frequency) specificications
+		### gather genotype (allele frequency) specifications
 		NSNP = size(sync)[1]
 		NPOOLS = size(sync)[2] - 3
 
@@ -90,7 +88,7 @@ end
 Parse the synchronized pileup file line by line and appends the output into a comma-separated (csv) file.
 
 # Output
-Allele frequency csv file with the filname: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
+Allele frequency csv file with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
 
 # Example
 `sync_processing_module.sync_parse("test/test.sync")`
@@ -99,7 +97,7 @@ function sync_parse(filename_sync::String)
 	### load the sync file
 	sync = DelimitedFiles.readdlm(filename_sync, '\t')
 
-	### gather genotype (allele frequency) specificications
+	### gather genotype (allele frequency) specifications
 	NSNP = size(sync)[1]
 	NPOOLS = size(sync)[2] - 3
 
