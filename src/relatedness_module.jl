@@ -1,5 +1,7 @@
 module relatedness_module
 
+using Distributed
+using SharedArrays
 using Statistics
 using DelimitedFiles
 include("sync_processing_module.jl")
@@ -231,6 +233,11 @@ Pairwise Fst estimates with the filename: `string(join(split(sync_fname, ".")[1:
 ```
 relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
 relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
+### Parallel computation:
+using Distributed
+Distributed.addprocs(length(Sys.cpu_info())-1)
+@everywhere include("GWAlpha.jl/src/relatedness_module_parallel.jl")
+relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
 ```
 """
 function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String=["WeirCock", "Hivert"][1])
@@ -250,21 +257,41 @@ function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array
     println(string("Number of loci: ", nLoci))
     ### Pairwise Fst estimation
     nPairs = convert(Int64, (nPools * (nPools - 1)) / 2)
-    PAIRWISE_Fst = zeros(nPools, nPools)
-    for i in 1:(nPools-1)
-        for j in (i+1):nPools
-            sub = sync[:, [1,2,3,(3+i), (3+j)]]
-            if METHOD == "WeirCock"
-                Fst = Fst_weir1984_func(sub, pool_sizes[[i,j]], window_size)[:,3]
-                PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
-            elseif METHOD == "Hivert"
-                Fst = Fst_hivert2018_func(sub, pool_sizes[[i,j]], window_size)[:,3]
-                PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
-            else
-                println(string("AwWwwW! SowWwWyyyy! We have not implemented the Pool-seq Fst calculation method: ", model, " yet."))
-                println("¯\\_(๑❛ᴗ❛๑)_/¯ ʚ(´◡`)ɞ")
+    PAIRWISE_Fst = SharedArrays.SharedArray{Float64,2}(nPools, nPools)
+    if length(Distributed.procs()) > 1
+    	println("Performing Pairwise Fst estimation in parallel...")
+     	@time x = @sync @distributed for i in 1:(nPools-1)
+            for j in (i+1):nPools
+                sub = sync[:, [1,2,3,(3+i), (3+j)]]
+                if METHOD == "WeirCock"
+                    Fst = Fst_weir1984_func(sub, pool_sizes[[i,j]], window_size)[:,3]
+                    PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
+                elseif METHOD == "Hivert"
+                    Fst = Fst_hivert2018_func(sub, pool_sizes[[i,j]], window_size)[:,3]
+                    PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
+                else
+                    println(string("AwWwwW! SowWwWyyyy! We have not implemented the Pool-seq Fst calculation method: ", model, " yet."))
+                    println("¯\\_(๑❛ᴗ❛๑)_/¯ ʚ(´◡`)ɞ")
+                end
+                PAIRWISE_Fst[j, i] = PAIRWISE_Fst[i, j]
             end
-            PAIRWISE_Fst[j, i] = PAIRWISE_Fst[i, j]
+        end
+    else
+        @time for i in 1:(nPools-1)
+            for j in (i+1):nPools
+                sub = sync[:, [1,2,3,(3+i), (3+j)]]
+                if METHOD == "WeirCock"
+                    Fst = Fst_weir1984_func(sub, pool_sizes[[i,j]], window_size)[:,3]
+                    PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
+                elseif METHOD == "Hivert"
+                    Fst = Fst_hivert2018_func(sub, pool_sizes[[i,j]], window_size)[:,3]
+                    PAIRWISE_Fst[i, j] = mean(Fst[.!isnan.(Fst)])
+                else
+                    println(string("AwWwwW! SowWwWyyyy! We have not implemented the Pool-seq Fst calculation method: ", model, " yet."))
+                    println("¯\\_(๑❛ᴗ❛๑)_/¯ ʚ(´◡`)ɞ")
+                end
+                PAIRWISE_Fst[j, i] = PAIRWISE_Fst[i, j]
+            end
         end
     end
     Fst_data_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")

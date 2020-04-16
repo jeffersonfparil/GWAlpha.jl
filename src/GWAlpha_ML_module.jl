@@ -218,18 +218,29 @@ function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float
 	locus_w_eff = SharedArrays.SharedArray{Int64,1}(NSNP*6)
 	allele_freq = SharedArrays.SharedArray{Float64,1}(NSNP*6)
 
-	# p = ProgressMeter.Progress(NSNP, 1, "GWAlpha_ML_iterator...", 50)
-	println("Performing GWAlpha_ML in parallel...")
- 	@time x = @sync @distributed for snp in 1:NSNP
-		# println(snp)
-		OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
-		idx = collect(((6*snp)-5):(6*snp))
-		alpha_out[idx] = OUT[1]
-		allele_id[idx] = OUT[2]
-		locus_id[idx] = OUT[3]
-		locus_w_eff[idx] = OUT[4]
-		allele_freq[idx] = OUT[5]
-		# ProgressMeter.next!(p)
+	if length(Distributed.procs()) > 1
+		println("Performing GWAlpha_ML in parallel...")
+	 	@time x = @sync @distributed for snp in 1:NSNP
+			# println(snp)
+			OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
+			idx = collect(((6*snp)-5):(6*snp))
+			alpha_out[idx] = OUT[1]
+			allele_id[idx] = OUT[2]
+			locus_id[idx] = OUT[3]
+			locus_w_eff[idx] = OUT[4]
+			allele_freq[idx] = OUT[5]
+		end
+	else
+		for snp in 1:NSNP
+			# println(snp)
+			OUT = GWAlpha_ML_iterator(COUNTS, snp, BINS, MAF, MIN, MAX, SD)
+			idx = collect(((6*snp)-5):(6*snp))
+			alpha_out[idx] = OUT[1]
+			allele_id[idx] = OUT[2]
+			locus_id[idx] = OUT[3]
+			locus_w_eff[idx] = OUT[4]
+			allele_freq[idx] = OUT[5]
+		end
 	end
 	ALPHA_OUT = alpha_out[locus_w_eff .== 1]
 	ALLELE_ID_INT = allele_id[locus_w_eff .== 1]
