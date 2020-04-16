@@ -37,10 +37,10 @@ GWAlpha.PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.0
 ```julia
 	Pheno_name='Phenotype Name';
 	sig=0.06724693662723039;		# standard deviation
-	MIN=0.0;						# minimum phenotype value
+	MIN=0.0;				# minimum phenotype value
 	MAX=0.424591738712776;			# maximum phenotype value
 	perc=[0.2,0.4,0.6,0.8];			# cummulative pool sizes percentiles excluding the last pool
-	q=[0.16,0.20,0.23,0.27,0.42];	# phenotype values corresponding to each percentile
+	q=[0.16,0.20,0.23,0.27,0.42];		# phenotype values corresponding to each percentile
 ```
 - **.csv** extension for comma-separated headerless pool sizes and corresponding mean phenotypic values, e.g.:
 ```julia
@@ -52,19 +52,19 @@ GWAlpha.PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.0
 ```
 3. *maf* [Float64]: minimum allele frequency threshold (default=0.001)
 4. *depth* [Int64]: minimum sequencing depth threshold (default=1)
-5. *model* [String]: GPAS model to use (default="GWAlpha")
-	- "GWAlpha" - iterative maximum likelihood estimation
-	- "ML_LS" - linear mixed model using maximum likelihood estimation of variances and least squares estimation of fixed effects (additive allelic effects)
-	- "ML_GLMNET"
-	- "REML_LS"
-	- "REML_GLMNET"
+5. *model* [String]: model to use (default="GWAlpha")
+	- **"GWAlpha"** - iterative maximum likelihood estimation
+	- **"ML_LS"** - linear mixed model using maximum likelihood (ML) estimation of variances and least squares (LS) estimation of fixed effects (additive allelic effects)
+	- **"ML_GLMNET"** - linear mixed model using ML and the elastic-net penalization (GLMNET) to estimate the additive allelic effects
+	- **"REML_LS"** - linear mixed model using restricted maximum likelihood (REML) and LS
+	- **"REML_GLMNET"** - linear mixed model using REML and GLMNET
 6. *filename_random_covariate* [String]: filename of a precomputed headerless square symmetric matrix of pool relatedness (default=nothing)
-7. *random_covariate* [String]: type of relatedness matrix to compute, if filename_random_covariate==nothing (default="FST")
-	- "FST" - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) ([Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see ?GWAlpha.relatedness_module.Fst_pairwise)
-	- "RELATEDNESS" - simple standardized relatedness matrix XX'/p, where X is the allele frequency matrix (Pool-seq data) and p is the number of columns of X
+7. *random_covariate* [String]: type of relatedness matrix to compute if `filename_random_covariate==nothing` (default="FST")
+	- "FST" - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) (additionally [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see `?GWAlpha.relatedness_module.Fst_pairwise`)
+	- "RELATEDNESS" - simple standardized relatedness matrix `XX'/p`, where `X` is the allele frequency matrix (Pool-seq data) and `p` is the number of columns of `X`
 8. *glmnet_alpha* [Float64]: elastic-net penalty (default=0.00 or ridge regression penalty)
-9. *fpr* [Float64]: false positive rate threshold for computing the Bonferroni threshold in significance testing
-9. *plot* [Bool]: generate a Manhattan and quantile-quantile (QQ) plot and save in portable network (.png) format
+9. *fpr* [Float64]: false positive rate for computing the Bonferroni threshold in significance testing
+9. *plot* [Bool]: generate Manhattan and quantile-quantile (QQ) plots, and save in a portable network graphics (.png) format
 
 ## Outputs
 1. Additive allelic effects array (header: CHROM, POS, ALLELE, FREQ, ALPHA, PVALUES, LOD) written into a comma-separated (.csv) file
@@ -119,7 +119,7 @@ The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙ
 - Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
 - W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
 
-Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with maximum likelihood mean and variance parameter estimation.
+Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with mean and variance estimated using maximum likelihood.
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
 - X [n,p] is the centered matrix of allele frequencies
