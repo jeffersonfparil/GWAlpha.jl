@@ -15,32 +15,7 @@ include("significance_testing_module.jl")
 
 `PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.001, depth::Int64=1, model::String=["GWAlpha", "ML_LS", "ML_GLMNET", "REML_LS", "REML_GLMNET"][1], filename_random_covariate=nothing, random_covariate::String=["FST", "RELATEDNESS"][1], glmnet_alpha::Float64=collect(range(0.0,1.0,step=0.01,))[1], fpr::Float64=0.01, plot::Bool=false)`
 
-Build genomic prediction models and perform genome-wide association on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
-
-The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
-- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
-- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
-- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
-- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
-- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
-- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
-
-Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with mean and variance estimated using maximum likelihood.
-
-
-The mixed linear model is defined as y = Xb + Zu + e, where:
-- X [n,p] is the centered matrix of allele frequencies
-- Z [n,n] is the square symmetric matrix of relatedness
-- y [n,1] is the centered vector of phenotypic values
-- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
-- u ~ N(0, σ²uI)
-- e ~ N(0, σ²eI)
-- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
-- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
-- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
-
-GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
+Build genomic prediction models and perform genome-wide association on quantitative traits (GPAS) by inferring additive allelic effects using pool sequencing (Pool-seq) data.
 
 # Inputs
 1. *filename_sync* [String]: filename of the genotype data in [synchronized pileup format (.sync)](https://sourceforge.net/p/popoolation2/wiki/Manual/)
@@ -65,33 +40,33 @@ GLMNET cross-validation to find the optimum tuning parameter (λ) was performed 
 3. *maf* [Float64]: minimum allele frequency threshold (default=0.001)
 4. *depth* [Int64]: minimum sequencing depth threshold (default=1)
 5. *model* [String]: GPAS model to use (default="GWAlpha")
-	- "GWAlpha" - iterative maximum likelihood estimation
-	- "ML_LS" - linear mixed model using maximum likelihood (ML) estimation of variances and least squares (LS) estimation of fixed effects (additive allelic effects)
-	- "ML_GLMNET" - linear mixed model using ML and the elastic-net penalization (GLMNET) to estimate the additive allelic effects
-	- "REML_LS" - linear mixed model using restricted maximum likelihood (REML) and LS
-	- "REML_GLMNET" - linear mixed model using REML and GLMNET
+- "GWAlpha" - iterative maximum likelihood estimation
+- "ML_LS" - linear mixed model using maximum likelihood (ML) estimation of variances and least squares (LS) estimation of fixed effects (additive allelic effects)
+- "ML_GLMNET" - linear mixed model using ML and the elastic-net penalization (GLMNET) to estimate the additive allelic effects
+- "REML_LS" - linear mixed model using restricted maximum likelihood (REML) and LS
+- "REML_GLMNET" - linear mixed model using REML and GLMNET
 6. *filename_random_covariate* [String]: filename of a precomputed headerless square symmetric matrix of pool relatedness (default=nothing)
 7. *random_covariate* [String]: type of relatedness matrix to compute, if filename_random_covariate==nothing (default="FST")
-	- **"FST"** - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) (additionally [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see `?GWAlpha.relatedness_module.Fst_pairwise`)
-	- **"RELATEDNESS"** - simple standardized relatedness matrix `XX'/p`, where `X` is the allele frequency matrix (Pool-seq data) and `p` is the number of columns of `X`
+- **"FST"** - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) (additionally [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see `?GWAlpha.relatedness_module.Fst_pairwise`)
+- **"RELATEDNESS"** - simple standardized relatedness matrix `XX'/p`, where `X` is the allele frequency matrix (Pool-seq data) and `p` is the number of columns of `X`
 8. *glmnet_alpha* [Float64]: elastic-net penalty (default=0.00 or ridge regression penalty)
 9. *fpr* [Float64]: false positive rate threshold for computing the Bonferroni threshold in significance testing (default=0.01)
 9. *plot* [Bool]: generate a Manhattan and quantile-quantile (QQ) plot and save in portable network (.png) format (default=false)
 
 # Outputs
 1. Additive allelic effects array (header: CHROM, POS, ALLELE, FREQ, ALPHA, PVALUES, LOD) written into a comma-separated (.csv) file
-	- "GWAlpha": `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "-GWAlpha-OUTPUT.csv")`
-	- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-OUTPUT.csv")`
+- "GWAlpha": `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "-GWAlpha-OUTPUT.csv")`
+- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-OUTPUT.csv")`
 2. Random covariate effects vector (headerless: RANDOM_EFFECTS) written into a comma-separated (.csv) file
-	- "GWAlpha": nothing
-	- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-RANEF-OUTPUT.csv")`
+- "GWAlpha": nothing
+- ["ML". "REML"]_["LS", "GLMNET"]: `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, "_", random_covariate, "-RANEF-OUTPUT.csv")`
 3. Manhattan and QQ plots in .png format
-	- `string(join(split(filename_output_csv, ".")[1:(end-1)], '.'), ".png")`
+- `string(join(split(filename_output_csv, ".")[1:(end-1)], '.'), ".png")`
 4. Parsing, filtering, and relatedness matrix outputs:
-	- Parsed sync data into a .csv file of allele frequency data (headerless: CHROM, POS, ALLELE, FREQ_POOL1, ..., FREQ_POOLn): `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
-	- Filtered sync data into a sync file: filename_sync_filtered = `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")`
-	- Boolean indices of sync filtering across loci*6 alleles (A:T:C:G:N:DEL) (headerless: IS_INCLUDED): `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, "_IDX_OUT.txt")`
-	- Pairwise pool relatedness (square, symmetric and headerless): `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_COVARIATE_", random_covariate, ".csv")`
+- Parsed sync data into a .csv file of allele frequency data (headerless: CHROM, POS, ALLELE, FREQ_POOL1, ..., FREQ_POOLn): `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")`
+- Filtered sync data into a sync file: filename_sync_filtered = `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")`
+- Boolean indices of sync filtering across loci*6 alleles (A:T:C:G:N:DEL) (headerless: IS_INCLUDED): `string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, "_IDX_OUT.txt")`
+- Pairwise pool relatedness (square, symmetric and headerless): `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_COVARIATE_", random_covariate, ".csv")`
 
 # Examples
 ```
@@ -116,6 +91,30 @@ Distributed.addprocs(length(Sys.cpu_info())-1)
 @everywhere using GWAlpha
 @time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_py, maf=0.001, depth=10, model="GWAlpha", fpr=0.01, plot=true)
 ```
+# Details
+The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
+- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
+- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
+- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
+- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
+- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
+- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
+
+Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with mean and variance estimated using maximum likelihood.
+
+
+The mixed linear model is defined as y = Xb + Zu + e, where:
+- X [n,p] is the centered matrix of allele frequencies
+- Z [n,n] is the square symmetric matrix of relatedness
+- y [n,1] is the centered vector of phenotypic values
+- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
+- u ~ N(0, σ²uI)
+- e ~ N(0, σ²eI)
+- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
+- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
+- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
+- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
 """
 function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.001, depth::Int64=1, model::String=["GWAlpha", "ML_LS", "ML_GLMNET", "REML_LS", "REML_GLMNET"][1], filename_random_covariate=nothing, random_covariate::String=["FST", "RELATEDNESS"][1], glmnet_alpha::Float64=collect(range(0.0,1.0,step=0.01,))[1], fpr::Float64=0.01, plot::Bool=false)
 	# ### TEST
