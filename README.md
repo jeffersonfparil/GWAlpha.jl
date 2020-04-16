@@ -6,31 +6,7 @@
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
 
-A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association (collectively abbreviated as GPAS) on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
-
-The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
-- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
-- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
-- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
-- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
-- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
-- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
-
-Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with maximum likelihood mean and variance parameter estimation.
-
-The mixed linear model is defined as y = Xb + Zu + e, where:
-- X [n,p] is the centered matrix of allele frequencies
-- Z [n,n] is the square symmetric matrix of relatedness
-- y [n,1] is the centered vector of phenotypic values
-- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
-- u ~ N(0, σ²uI)
-- e ~ N(0, σ²eI)
-- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
-- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
-- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
-
-GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
+A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
 
 ## Installation
 Install dependencies (see [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml)):
@@ -52,7 +28,6 @@ using GWAlpha
 ## Usage
 ```julia
 GWAlpha.PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.001, depth::Int64=1, model::String=["GWAlpha", "ML_LS", "ML_GLMNET", "REML_LS", "REML_GLMNET"][1], filename_random_covariate=nothing, random_covariate::String=["FST", "RELATEDNESS"][1], glmnet_alpha::Float64=collect(range(0.0,1.0,step=0.01,))[1], fpr::Float64=0.01, plot::Bool=false)
-
 ```
 
 ## Inputs
@@ -130,18 +105,35 @@ Distributed.addprocs(length(Sys.cpu_info())-1)
 @time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_py, maf=0.001, depth=10, model="GWAlpha", fpr=0.01, plot=true)
 ```
 
-## More details
-Open Julia, load the GWAlpha library,
-```julia
-using GWAlpha
-?GWAlpha.PoolGPAS
-```
-
 ## Contents
 - original GWAlpha implemented in python in the [legacy directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/legacy)
 - Julia, shell, and R scripts are located in the [src directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/src)
 - test scripts are found in the [test directory](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/test)
 
-## Citations
+## Details
+The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙₐₜᵢᵥₑ)/σᵧ, where:
+- μ is the mean of the beta distribution Beta(θ) where θ={θ₁,θ₂}
+- θ is estimated via maximum likelihood L(θ|Q) ∝ πᵢ₌₁₋ₖf(qᵢ|θ)
+- Q = {q₁,...,qₖ} is the cumulative sum of allele frequencies across increasing-phenotypic-value-sorted pools where k is the number of pools
+- E(allele|θ) = Beta_cdf(yᵢ',θ) - Beta_cdf(yᵢ₋₁',θ), where yᵢ' ∈ Y'
+- Y' is the inverse quantile-normalized into phenotype data such that Y' ∈ [0,1]
+- W = 2√{E(allele)*(1-E(allele))} is the penalization for low allele frequency
 
+Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with maximum likelihood mean and variance parameter estimation.
+
+The mixed linear model is defined as y = Xb + Zu + e, where:
+- X [n,p] is the centered matrix of allele frequencies
+- Z [n,n] is the square symmetric matrix of relatedness
+- y [n,1] is the centered vector of phenotypic values
+- no intercept is explicitly fitted but implicitly set at the mean phenotypic value as a consequence of centering y
+- u ~ N(0, σ²uI)
+- e ~ N(0, σ²eI)
+- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
+- variance components (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
+- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
+- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
+
+GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
+
+## Citation
 Fournier-Level A, Robin C, Balding DJ (2016). [GWAlpha: Genome-Wide estimation of additive effects (Alpha) based on trait quantile distribution from pool-sequencing experiments.](https://doi.org/10.1093/bioinformatics/btw805)
