@@ -103,7 +103,7 @@ The GWAlpha model is defined as α = W(μₐₗₗₑₗₑ-μₐₗₜₑᵣₙ
 Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with mean and variance estimated using maximum likelihood.
 
 
-The mixed linear model is defined as y = Xb + Zu + e, where:
+The linear mixed model is defined as y = Xb + Zu + e, where:
 - X [n,p] is the centered matrix of allele frequencies
 - Z [n,n] is the square symmetric matrix of relatedness
 - y [n,1] is the centered vector of phenotypic values
