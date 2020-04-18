@@ -6,18 +6,16 @@
 
 <!--- [![CircleCI](https://circleci.com/gh/jeffersonfparil/GWAlpha.svg?style=shield)](https://circleci.com/gh/jeffersonfparil/GWAlpha) --->
 
-A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association on quantitative traits by inferring additive allelic effects using pool sequencing (Pool-seq; i.e. allele frequencies) data.
+A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association on quantitative traits by inferring additive allelic effects using pool sequencing data (Pool-seq; i.e. allele frequencies).
 
 ## Installation
-Install dependencies (see [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml)):
-```shell
-sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
-sudo add-apt-repository -y "deb http://cran.rstudio.com/bin/linux/ubuntu $(lsb_release -s -c)/"
-sudo apt-get update -qq -y
-sudo apt-get install --allow-unauthenticated git r-base r-base-dev r-recommended -y
-Rscript -e "install.packages('RColorBrewer')"
-Rscript -e "install.packages('pacman'); pacman::p_load_gh('sahirbhatnagar/ggmix')"
-```
+Install dependencies (see [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml)) for Ubuntu18.04-specific installation:
+- [Julia](https://julialang.org/downloads/)
+- [R](https://www.r-project.org/)
+- R packages:
+  - [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html)
+	- [RColorBrewer](https://cran.r-project.org/web/packages/RColorBrewer/index.html)
+
 Installation in Julia:
 ```julia
 using Pkg
