@@ -9,12 +9,14 @@
 A [Julia](https://julialang.org/downloads/) package for building genomic prediction models and performing genome-wide association on quantitative traits by inferring additive allelic effects using pool sequencing data (Pool-seq; i.e. allele frequencies).
 
 ## Installation
-Install dependencies (see [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml)) for Ubuntu18.04-specific installation:
+Install dependencies:
 - [Julia](https://julialang.org/downloads/)
 - [R](https://www.r-project.org/)
 - R packages:
   - [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html)
-	- [RColorBrewer](https://cran.r-project.org/web/packages/RColorBrewer/index.html)
+  - [RColorBrewer](https://cran.r-project.org/web/packages/RColorBrewer/index.html)
+
+See [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml) for Ubuntu18.04-specific installation
 
 Installation in Julia:
 ```julia
