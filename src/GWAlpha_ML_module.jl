@@ -175,7 +175,7 @@ end
 function GWAlpha_ML(;filename_sync::String, filename_phen_py::String, MAF::Float64)
 	### load the sync and phenotype files
 	SYNC = DelimitedFiles.readdlm(filename_sync, '\t')
-	phen = DelimitedFiles.readdlm(filename_phen_py)
+	phen = DelimitedFiles.readdlm(filename_phen_py, '\t')
 
 	### gather phenotype specifications
 	NPOOLS = length(split(phen[5], ['=', ',', '[', ']', ';'])) - 3 #less the first leading and trailing elements
