@@ -140,7 +140,20 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 		println("Performing Mixed Modelling")
 		println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 		filename_sync_parsed = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
-		if isfile(filename_sync_parsed) == false
+		### filter by maf and depth, and parse the sync file if the input file has not yet been filtered and parsed
+		split_fname = split(filename_sync_parsed, "_")
+		bool_maf = try 
+						maf == parse(Float64, split(split_fname[.!isnothing.(match.(r"MAF", split_fname))][1], "MAF")[2])
+					catch
+						false
+					end ### filtered by minimum allele frequency?
+		bool_depth = try
+						depth == parse(Int64, split(split(split_fname[.!isnothing.(match.(r"DEPTH", split_fname))][1], "DEPTH")[2], ".")[1])
+					catch
+						false
+					end ### filtered by minimum sequencing depth?
+		bool_allelefreq = isfile(filename_sync_parsed) ### parsed?
+		if (bool_allelefreq & bool_maf & bool_depth) == false
 			println(string("Filtering the genotype data (sync format): \"", filename_sync, "\" by minimum allele frequency: ", maf, " and minimum depth: ", depth, "."))
 			idx = sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
 			p = sum(idx) ### number of predictors i.e. the total number of alleles across loci after filtering by MAF and minimum depth
