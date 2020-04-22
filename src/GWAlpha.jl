@@ -139,13 +139,15 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 		println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 		println("Performing Mixed Modelling")
 		println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-		println(string("Filtering the genotype data (sync format): \"", filename_sync, "\" by minimum allele frequency: ", maf, " and minimum depth: ", depth, "."))
-		idx = sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
-		p = sum(idx) ### number of predictors i.e. the total number of alleles across loci after filtering by MAF and minimum depth
-		filename_sync_filtered = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")
-		println(string("Parsing the unfiltered genotype data (sync format): \"", filename_sync, "\" parse, load, and filter using the filtering indices output."))
-		sync_processing_module.sync_parse(filename_sync) ### use the unfiltered sync file and then filter with the indices (idx)
 		filename_sync_parsed = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
+		if isfile(filename_sync_parsed) == false
+			println(string("Filtering the genotype data (sync format): \"", filename_sync, "\" by minimum allele frequency: ", maf, " and minimum depth: ", depth, "."))
+			idx = sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
+			p = sum(idx) ### number of predictors i.e. the total number of alleles across loci after filtering by MAF and minimum depth
+			filename_sync_filtered = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")
+			println(string("Parsing the unfiltered genotype data (sync format): \"", filename_sync, "\" parse, load, and filter using the filtering indices output."))
+			sync_processing_module.sync_parse(filename_sync) ### use the unfiltered sync file and then filter with the indices (idx)
+		end
 		println(string("Load the filtered and parsed genotype data (csv format): \"", filename_sync_parsed, "\"."))
 		GENO = DelimitedFiles.readdlm(filename_sync_parsed, ',')[idx, :]
 		X = convert(Array{Float64,2}, GENO[:,4:end]')
