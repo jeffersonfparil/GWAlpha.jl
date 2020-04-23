@@ -154,6 +154,8 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 			println(string("Parsing the filtered genotype data (sync format): \"", filename_sync, "\""))
 			sync_processing_module.sync_parse(filename_sync_filtered)
 			filename_sync_parsed = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
+		else
+			filename_sync_filtered = filename_sync
 		end
 		println(string("Load the filtered and parsed genotype data (csv format): \"", filename_sync_parsed, "\"."))
 		GENO = DelimitedFiles.readdlm(filename_sync_parsed, ',')
