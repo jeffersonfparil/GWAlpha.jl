@@ -180,6 +180,8 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 			elseif random_covariate == "RELATEDNESS"
 				relatedness_module.standardized_relatedness(filename_sync_filtered)
 			end
+		else
+			random_covariate = "user-defined covariate"
 		end
 		println(string("Loading relatedness matrix to be used as the random covariate: ", filename_random_covariate))
 		Z = DelimitedFiles.readdlm(filename_random_covariate, ',')
