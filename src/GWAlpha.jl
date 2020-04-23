@@ -133,9 +133,8 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 		println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 		println("Performing Mixed Modelling")
 		println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-		filename_sync_parsed = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
-		### filter by maf and depth, and parse the sync file if the input file has not yet been filtered and parsed
-		split_fname = split(filename_sync_parsed, "_")
+		### filter the sync file by maf and depth if the input file has not yet been filtered
+		split_fname = split(filename_sync, "_")
 		bool_maf = try 
 						maf == parse(Float64, split(split_fname[.!isnothing.(match.(r"MAF", split_fname))][1], "MAF")[2])
 					catch
@@ -146,16 +145,21 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 					catch
 						false
 					end ### filtered by minimum sequencing depth?
-		bool_allelefreq = isfile(filename_sync_parsed) ### parsed?
-		if (bool_allelefreq & bool_maf & bool_depth) == false
+		if (bool_maf & bool_depth) == false
 			println(string("Filtering the genotype data (sync format): \"", filename_sync, "\" by minimum allele frequency: ", maf, " and minimum depth: ", depth, "."))
 			sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
 			filename_sync_filtered = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")
+			
+		else
+			filename_sync_filtered = filename_sync
+		end
+		### parse the filtered sync file if the input file has not yet been parsed
+		if !isfile(filename_sync_parsed)
 			println(string("Parsing the filtered genotype data (sync format): \"", filename_sync, "\""))
 			sync_processing_module.sync_parse(filename_sync_filtered)
 			filename_sync_parsed = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
 		else
-			filename_sync_filtered = filename_sync
+			filename_sync_parsed = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
 		end
 		println(string("Load the filtered and parsed genotype data (csv format): \"", filename_sync_parsed, "\"."))
 		GENO = DelimitedFiles.readdlm(filename_sync_parsed, ',')
