@@ -189,7 +189,7 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 		METHOD_VAR_EST = string(split(model, "_")[1])
 		METHOD_FIX_EST = string(split(model, "_")[2])
 		println(string("Fitting a mixed model using ", METHOD_VAR_EST, " variance estimation and ", METHOD_FIX_EST, " fixed effects estimation with ", random_covariate, " as the random covariate."))
-		b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=fpr)
+		b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=glmnet_alpha)
 		println("Significance testing")
 		PVAL, LOD = significance_testing_module.estimate_pval_lod(b_hat)
 		println("Summarizing")
