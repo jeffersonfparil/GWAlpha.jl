@@ -146,13 +146,13 @@ end
 # ___________________________________________________________________
 # Fixation index (Fst) estimation from Pool-seq data across all pools
 
-`Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
+`Fst_across_pools(;filename_sync::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
 
 Compute **across pools Fst** using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
 or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf)
 
 # Input
-1. *sync_fname*: synchronized pileup filename
+1. *filename_sync*: synchronized pileup filename (filtered by minimum allele frequency and depth)
 2. *window_size*: size of non-overlapping sliding window in base-pairs
 3. *pool-sizes*: array of pool sizes corresponding to each genotype column in the sync file
 4. *METHOD*: Fst calculation method to use:
@@ -160,24 +160,24 @@ or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/ear
 - "Hivert"
 
 # Output
-1. Fst estimates per window with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")`
-2. Mean Fst estimate with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")`
+1. Fst estimates per window with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")`
+2. Mean Fst estimate with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")`
 
 # Examples
 ```
-relatedness_module.Fst_across_pools(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
-relatedness_module.Fst_across_pools(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
+relatedness_module.Fst_across_pools(filename_sync="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+relatedness_module.Fst_across_pools(filename_sync="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
 ```
 """
-function Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)
+function Fst_across_pools(;filename_sync::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)
     println("#################################################################################################")
     println("Fst estimation across pools:")
     ### load the sync allele frequency data
-    sync = DelimitedFiles.readdlm(sync_fname)
+    sync = DelimitedFiles.readdlm(filename_sync)
     ### input parameters
     nPools = size(sync,2)  - 3
     nLoci = size(sync,1)
-    println(string("Synchronized pileup file: ", sync_fname))
+    println(string("Synchronized pileup file: ", filename_sync))
     println(string("Non-overlapping window size: ", window_size, " bp"))
     println(string("Number of pools: ", nPools))
     for i in 1:length(pool_sizes)
@@ -194,8 +194,8 @@ function Fst_across_pools(;sync_fname::String, window_size::Int64, pool_sizes::A
         println("¯\\_(๑❛ᴗ❛๑)_/¯ ʚ(´◡`)ɞ")
     end
     println("Writing the output into the files:")
-    Fst_data_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")
-    Fst_sumstats_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")
+    Fst_data_out_fname = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_data.csv")
+    Fst_sumstats_out_fname = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_window_", window_size, "bp_Fst_sumstats.csv")
     println(string("(1/2) ", Fst_data_out_fname, " for the Fst per chromosome per locus."))
     println(string("(2/2) ", Fst_sumstats_out_fname, " for the summary statistics of Fst across chromosomes and loci (i.e. mean, min, max and var)."))
     println("#################################################################################################")
@@ -213,13 +213,13 @@ end
 # _______________________________________________________________
 # Pairwise estimation of fixation indices (Fst) from Pool-seq data
 
-`Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
+`Fst_pairwise(;filename_sync::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String)`
 
 Compute **pairwise Fst** using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
 or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf)
 
 # Input
-1. *sync_fname*: synchronized pileup filename
+1. *filename_sync*: synchronized pileup filename (filtered by minimum allele frequency and depth)
 2. *window_size*: size of non-overlapping sliding window in base-pairs
 3. *pool-sizes*: array of pool sizes corresponding to each genotype column in the sync file
 4. *METHOD*: Fst calculation method to use:
@@ -227,28 +227,28 @@ or using [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/ear
     - "Hivert"
 
 # Output
-Pairwise Fst estimates with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")`
+Pairwise Fst estimates with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")`
 
 # Examples
 ```
-relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
-relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
+relatedness_module.Fst_pairwise(filename_sync="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+relatedness_module.Fst_pairwise(filename_sync="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="Hivert")
 ### Parallel computation:
 using Distributed
 Distributed.addprocs(length(Sys.cpu_info())-1)
 @everywhere include("GWAlpha.jl/src/relatedness_module_parallel.jl")
-relatedness_module.Fst_pairwise(sync_fname="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
+relatedness_module.Fst_pairwise(filename_sync="test/test.sync", window_size=100000, pool_sizes=[20,20,20,20,20], METHOD="WeirCock")
 ```
 """
-function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String=["WeirCock", "Hivert"][1])
+function Fst_pairwise(;filename_sync::String, window_size::Int64, pool_sizes::Array{Int64,1}, METHOD::String=["WeirCock", "Hivert"][1])
     println("#################################################################################################")
     println("Pairwise Fst estimation:")
     ### load the sync allele frequency data
-    sync = DelimitedFiles.readdlm(sync_fname)
+    sync = DelimitedFiles.readdlm(filename_sync)
     ### input parameters
     nPools = size(sync,2)  - 3
     nLoci = size(sync,1)
-    println(string("Synchronized pileup file: ", sync_fname))
+    println(string("Synchronized pileup file: ", filename_sync))
     println(string("Non-overlapping window size: ", window_size, " bp"))
     println(string("Number of pools: ", nPools))
     for i in 1:length(pool_sizes)
@@ -294,7 +294,7 @@ function Fst_pairwise(;sync_fname::String, window_size::Int64, pool_sizes::Array
             end
         end
     end
-    Fst_data_out_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")
+    Fst_data_out_fname = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_FST.csv")
     DelimitedFiles.writedlm(Fst_data_out_fname, PAIRWISE_Fst, ',')
     println("#################################################################################################")
     return(0)
@@ -304,36 +304,37 @@ end
 # _______________________________
 # Standardized relatedness matrix
 
-`standardized_relatedness(sync_fname::String)`
+`standardized_relatedness(filename_sync::String)`
 
 Compute a simple standardized relatedness matrix XX'/p, where X is the allele frequency matrix (Pool-seq data) and p is the number of columns of X
 
 # Input
-1. *sync_fname*: synchronized pileup filename
+1. *filename_sync*: synchronized pileup filename (filtered by minimum allele frequency and depth)
 
 # Output
-Standardized relatedness matrix with the filename: `string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_RELATEDNESS.csv")`
+Standardized relatedness matrix with the filename: `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_RELATEDNESS.csv")`
 
 # Examples
 ```
 relatedness_module.standardized_relatedness("test/test.sync")
 ```
 """
-function standardized_relatedness(sync_fname::String)
+function standardized_relatedness(filename_sync::String)
     println("#################################################################################################")
     println("Relatedness estimation:")
     ### check if the parsed sync file i.e. the allele frequency csv file exists
     ### if it does then use it, otherwise parse the sync file
-    filename_parsed_sync = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
+    filename_parsed_sync = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
 	if isfile(filename_parsed_sync)
 		# rm(filename_out)
 		println(string("Using the existing parsed sync file in csv format: ", filename_parsed_sync))
     else
-        sync_processing_module.sync_parse(sync_fname)
+        sync_processing_module.sync_parse(filename_sync)
 	end
-    X = convert(Array{Float64,2},DelimitedFiles.readdlm(filename_parsed_sync, ',')[:,4:end])'
+    X_raw = convert(Array{Float64,2},DelimitedFiles.readdlm(filename_parsed_sync, ',')[:,4:end])
+    X = X_raw[sum(X_raw, dims=2)[:,1] .!= 0.0, :]'
     K = X*X' ./ size(X,2)
-    relatedness_fname = string(join(split(sync_fname, ".")[1:(end-1)], '.'), "_COVARIATE_RELATEDNESS.csv")
+    relatedness_fname = string(join(split(filename_sync, ".")[1:(end-1)], '.'), "_COVARIATE_RELATEDNESS.csv")
     DelimitedFiles.writedlm(relatedness_fname, K, ',')
     println("#################################################################################################")
     return(0)

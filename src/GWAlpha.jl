@@ -78,13 +78,7 @@ filename_phen_csv = "test/test.csv"
 using GWAlpha
 @time OUT_GWAS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_py, maf=0.001, depth=10, model="GWAlpha", fpr=0.01, plot=true)
 @time OUT_ML_LS_FST = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="ML_LS", random_covariate="FST", fpr=0.01, plot=true)
-@time OUT_ML_LS_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="ML_LS", random_covariate="RELATEDNESS", fpr=0.01, plot=true)
-@time OUT_ML_GLMNET_FST = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="ML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
-@time OUT_ML_GLMNET_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="ML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
-@time OUT_REML_LS_FST = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_LS", random_covariate="FST", fpr=0.01, plot=true)
-@time OUT_REML_LS_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_LS", random_covariate="RELATEDNESS", fpr=0.01, plot=true)
-@time OUT_REML_GLMNET_FST = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
-@time OUT_REML_GLMNET_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=0.50, fpr=0.01, plot=true)
+@time OUT_REML_LASSO_RELATEDNESS = GWAlpha.PoolGPAS(filename_sync=filename_sync, filename_phen=filename_phen_csv, maf=0.001, depth=10, model="REML_GLMNET", random_covariate="RELATEDNESS", glmnet_alpha=1.00, fpr=0.01, plot=true)
 ### Multi-threaded execution (parallel execution only applicable to model=="GWAlpha"):
 using Distributed
 Distributed.addprocs(length(Sys.cpu_info())-1)
@@ -155,31 +149,32 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 		bool_allelefreq = isfile(filename_sync_parsed) ### parsed?
 		if (bool_allelefreq & bool_maf & bool_depth) == false
 			println(string("Filtering the genotype data (sync format): \"", filename_sync, "\" by minimum allele frequency: ", maf, " and minimum depth: ", depth, "."))
-			idx = sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
-			p = sum(idx) ### number of predictors i.e. the total number of alleles across loci after filtering by MAF and minimum depth
+			sync_processing_module.sync_filter(filename_sync=filename_sync, MAF=maf, DEPTH=depth);
 			filename_sync_filtered = string(join(split(filename_sync, ".")[1:(end-1)], "."), "_MAF", maf, "_DEPTH", depth, ".sync")
-			println(string("Parsing the unfiltered genotype data (sync format): \"", filename_sync, "\" parse, load, and filter using the filtering indices output."))
-			sync_processing_module.sync_parse(filename_sync) ### use the unfiltered sync file and then filter with the indices (idx)
+			println(string("Parsing the filtered genotype data (sync format): \"", filename_sync, "\""))
+			sync_processing_module.sync_parse(filename_sync_filtered)
+			filename_sync_parsed = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_ALLELEFREQ.csv")
 		end
 		println(string("Load the filtered and parsed genotype data (csv format): \"", filename_sync_parsed, "\"."))
-		GENO = DelimitedFiles.readdlm(filename_sync_parsed, ',')[idx, :]
-		X = convert(Array{Float64,2}, GENO[:,4:end]')
+		GENO = DelimitedFiles.readdlm(filename_sync_parsed, ',')
+		idx_non_zero = sum(GENO[:,4:end],dims=2)[:,1] .!= 0.0
+		X = convert(Array{Float64,2}, GENO[idx_non_zero, 4:end]')
 		println(string("Loading phenotype data (csv format): ", filename_phen))
 		PHENO = DelimitedFiles.readdlm(filename_phen, ',')
 		n_pools = size(PHENO,1)
 		pool_sizes = convert(Array{Int64,1},PHENO[:,1])
 		y = convert(Array{Float64,1},PHENO[:,2])
 		println(string("Extracting loci information from \"", filename_sync_parsed, "\"."))
-		CHROM = convert(Array{Any,1}, GENO[:,1])
-		POS = convert(Array{Int64,1}, GENO[:,2])
-		ALLELE = convert(Array{String,1}, GENO[:,3])
-		FREQ = convert(Array{Float64,1}, sum(X .* (pool_sizes/sum(pool_sizes)), dims=1)[1,:])
+		CHROM = convert(Array{Any,1}, GENO[idx_non_zero, 1])
+		POS = convert(Array{Int64,1}, GENO[idx_non_zero, 2])
+		ALLELE = convert(Array{String,1}, GENO[idx_non_zero, 3])
+		FREQ = convert(Array{Float64,1}, sum(X .* (pool_sizes/sum(pool_sizes)'), dims=1)[1,:])
 		### load random covariate of relatedness (Fst matrix or standardized relatedness matrix) computed from the filtered sync file
 		if isnothing(filename_random_covariate)
 			filename_random_covariate = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "_COVARIATE_", random_covariate, ".csv")
 			println(string("Building relatedness matrix to be used as the random covariate: ", filename_random_covariate))
 			if random_covariate == "FST"
-				relatedness_module.Fst_pairwise(sync_fname=filename_sync_filtered, window_size=100000, pool_sizes=pool_sizes) ### default="WeirCock" [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
+				relatedness_module.Fst_pairwise(filename_sync=filename_sync_filtered, window_size=100000, pool_sizes=pool_sizes) ### default="WeirCock" [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1)
 			elseif random_covariate == "RELATEDNESS"
 				relatedness_module.standardized_relatedness(filename_sync_filtered)
 			end
