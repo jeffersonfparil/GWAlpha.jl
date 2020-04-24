@@ -39,105 +39,12 @@ function inverse(A::Array{Float64,2})
 	return(out)
 end
 
-"""
-# ______________________________________
-# Least squares fixed effects estimation
-
-`BLUE_least_squares(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V::Array{Any,2}=nothing)`
-
-# Inputs
-1. *X* [Array{Float64,2}; xij ∈ [0.00, 1.00]]: matrix of allele frequencies (Pool-seq data)
-2. *y* [Array{Float64,1}]: vector of phenotypes
-3. *inv_V* [Array{Float64,2}]: inverse of the variance-covariance matrix of the phenotypes (default=nothing) (e.g. LMM_module.inverse(Z*(σ2u*I)*Z')+(σ2e*I))
-
-# Output
-1. Least squares estimate of the fixed effects of X
-
-# Examples
-```
-using Distributions
-using LinearAlgebra
-n=5; l=200; Ve=1.00; Vu=1.00;
-X = reshape(abs.(rand(n*l)), n, l)
-Z = reshape(abs.(rand(n^2)), n, n)
-b = zeros(l); b[[5,10,100]] = [1.00, 1.00, 1.00]
-u = rand(Distributions.Normal(0.00, Vu), n)
-e = rand(Distributions.Normal(0.00, Ve), n)
-y = (X*b) .+ (Z*u) .+ e
-inv_V = LMM_module.inverse(Z*(Vu*I)*Z')+(Ve*I)
-LMM_module.BLUE_least_squares(X=X, y=y, inv_V=inv_V)
-LMM_module.BLUE_least_squares(X=X, y=y)
-```
-"""
-function BLUE_least_squares(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V=nothing)
-	if isnothing(inv_V)
-		b_hat = (X') * inverse(X * X') * y
-	else
-		b_hat = (X' * inv_V) * inverse(X * X' * inv_V) * y
-	end
-	return(b_hat)
-end
-
-"""
-# _______________________________
-# GLMNET fixed effects estimation
-
-`BLUE_glmnet(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V::Array{Float64,2}, alfa::Float64=0.0, lambda::Float64=1.00)`
-
-Jerome Friedman, Trevor Hastie, Rob Tibshirani that fits entire Lasso or ElasticNet regularization paths for linear, logistic, multinomial, and Cox models using cyclic coordinate descent.
-
-# Inputs
-1. *X* [Array{Float64,2}; xij ∈ [0.00, 1.00]]: matrix of allele frequencies (Pool-seq data)
-2. *y* [Array{Float64,1}]: vector of phenotypes
-3. *inv_V* [Array{Any,2}]: inverse of the variance-covariance matrix of the phenotypes (e.g. LMM_module.inverse(Z*(σ2u*I)*Z')+(σ2e*I)) (default=nothing)
-4. *alfa* [Float64]: elastic penalty parameter ranging from 0.00 for L2-norm penalization (ridge) up to 1.00 for L1-norm penalization (LASSO) (default=0.00)
-5. *lambda* [Float64]: shrinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
-
-# Output
-1. Least squares estimate of the fixed effects of X
-
-# Examples
-```
-using Distributions
-using LinearAlgebra
-n=5; l=200; Ve=1.00; Vu=1.00;
-X = reshape(abs.(rand(n*l)), n, l)
-Z = reshape(abs.(rand(n^2)), n, n)
-b = zeros(l); b[[5,10,100]] = [1.00, 1.00, 1.00]
-u = rand(Distributions.Normal(0.00, Vu), n)
-e = rand(Distributions.Normal(0.00, Ve), n)
-y = (X*b) .+ (Z*u) .+ e
-inv_V = LMM_module.inverse(Z*(Vu*I)*Z')+(Ve*I)
-LMM_module.BLUE_glmnet(X=X, y=y, inv_V=inv_V)
-LMM_module.BLUE_glmnet(X=X, y=y)
-```
-"""
-function BLUE_glmnet(;X::Array{Float64,2}, y::Array{Float64,1}, inv_V=nothing, alfa::Float64=0.0, lambda::Float64=1.00)
-	### Rotating X to account for the random effects variances
-	X = copy(X)
-	if isnothing(inv_V) == false
-		X[:,:] = inv_V * X
-	end
-	### using the lambda that generates the least error and fitting without an intercept
-	@rput X;
-	@rput y;
-	@rput alfa;
-	@rput lambda;
-	R"glmnet_out = glmnet::glmnet(x=X, y=y, alpha=alfa, intercept=FALSE, lambda=lambda)";
-	R"b_hat = as.numeric(glmnet_out$beta)";
-	# R"y_pred = X%*%b_hat"
-	# R"cbind(y, y_pred)"
-	# R"sqrt(mean(y-y_pred)^2)"
-	# R"plot(b_hat)"
-	@rget b_hat;
-	return(b_hat)
-end
 
 """
 # ________________________________________________________________
-# Mixed linear model parameter optimization and effects estimation
+# Linear mixed model parameter optimization and effects estimation
 
-`LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0, lambda::Float64=1.00, OPTIMIZE::Bool=true, VARFIXEF::Bool=false)`
+`LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], OPTIMIZE::Bool=true, VARFIXEF::Bool=false)`
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
 	- X [n,p] is the centered matrix of allele frequencies
@@ -148,10 +55,8 @@ The mixed linear model is defined as y = Xb + Zu + e, where:
 	- e ~ N(0, σ²eI)
 	- y ~ N(0, V); V = (Z (σ²uI) Z') + (σ²eI)
 	- variance component (σ²e, σ²u) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-	- fixed effects (b) are estimated via least squares (LS) or elastic-net penalization (GLMNET*; default: α=0.00 which is ridge regression)
-	- random effects (y) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
-
-GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
+	- fixed effects (b) are estimated by solving: (X' * inverse(V)) * inverse(X * X' * inverse(V)) * y
+	- random effects (u) are estimated by solving: (σ²uI) * Z' * inverse(V) * (y - (X*b))
 
 # Inputs
 1. parameters [Array{Float64,1}]: the error variance (σ2e) and random effects variance (σ2u)
@@ -159,11 +64,8 @@ GLMNET cross-validation to find the optimum tuning parameter (λ) was performed 
 3. *y* [Array{Float64,1}]: vector of phenotypes
 4. *Z* [Array{Any,2}]: matrix of relatedness (Fst or XX'/p where p is the number of columns in X) set as the random effects
 5. *METHOD_VAR_EST* [String]: method of variance parameter estimation choose "ML" for maximum likelihood or "REML" for restricted maximum likelihood (default="ML")
-6. *METHOD_FIX_EST* [String]: method of fixed effects estimation choose "LS" for least squares or "GLMNET" for elastic-net penalty (default="LS")
-7. *alfa* [Float64]: elastic penalty parameter ranging from 0.00 for L2-norm penalization (ridge) up to 1.00 for L1-norm penalization (LASSO) (default=0.00)
-8. *lambda* [Float64]: shrinkage parameter (larger values shrink the effects closer to zero) (default=1.00)
-9. *OPTIMIZE* [Bool]: logical value to perform optimization to find estimate the variance parameters if TRUE or to estimate the fixed and random effects if FALSE (default=true)
-10. *VARFIXEF* [Bool]: logical value to estimate the variances of the fixed effects which can be computationally and memory intensive for large datasets (default=false)
+6. *OPTIMIZE* [Bool]: logical value to perform optimization to find estimate the variance parameters if TRUE or to estimate the fixed and random effects if FALSE (default=true)
+7. *VARFIXEF* [Bool]: logical value to estimate the variances of the fixed effects which can be computationally and memory intensive for large datasets (default=false)
 
 # Outputs
 1. *If OPTIMIZE==true*: Negative log-likelihood of the parameters (σ2e and σ2u) given the dataset (X, y, and Z)
@@ -185,7 +87,7 @@ par = Optim.optimize(par -> LMM_module.LMM_optim(par, X=X, y=y, Z=Z), [0.0,0.0],
 b_hat, u_hat, Vb_hat = LMM_module.LMM_optim(par, X=X, y=y, Z=Z, OPTIMIZE=false)
 ```
 """
-function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0, lambda::Float64=1.00, OPTIMIZE::Bool=true, VARFIXEF::Bool=false)
+function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], OPTIMIZE::Bool=true, VARFIXEF::Bool=false)
 	### y = Xb + Zu + e; where Xb=fixed and Za=random
 	σ2e = parameters[1] # variance of the error effects (assuming homoscedasticity)
 	σ2u = parameters[2] # variance of the other random effects (assuming homoscedasticity)
@@ -199,14 +101,7 @@ function LMM_optim(parameters::Array{Float64,1}; X::Array{Float64,2}, y::Array{F
 	inv_V = inverse(V)
 	### Mixed model equations
 	###### Fixed effects:
-	if METHOD_FIX_EST == "LS"
-		b_hat = BLUE_least_squares(X=X, y=y, inv_V=inv_V)
-	elseif METHOD_FIX_EST == "GLMNET"
-		b_hat = BLUE_glmnet(X=X, y=y, inv_V=inv_V, alfa=alfa, lambda=lambda)
-	else
-		println(string("Sorry. ", METHOD_FIX_EST, " is not a valid method of estimating the fixed effects. Please pick LS or GLMNET."))
-		exit()
-	end
+	b_hat = (X' * inv_V) * inverse(X * X' * inv_V) * y
 	###### Random effects:
 	u_hat = D * Z' * inv_V * (y - (X*b_hat))
 	### Calculate the log-likelihood of the parameters (variances of the error and random effects: σ2e and σ2u) given the data
@@ -263,7 +158,7 @@ end
 # ______________________
 # Linear Mixed Modelling
 
-`LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0)`
+`LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1])`
 
 The mixed linear model is defined as y = Xb + Zu + e, where:
 	- no intercept is fitted
@@ -274,15 +169,11 @@ The mixed linear model is defined as y = Xb + Zu + e, where:
 	- e ~ N(0, σ2eI)
 	- y ~ (Z (σ2uI) Z') + (σ2eI)
 
-GLMNET cross-validation to find the optimum tuning parameter (λ) was performed once for the fixed model: y = Xb + e to expedite variance components estimation vial ML or REML. The tuning parameter which minimized the mean squared error is selected.
-
 # Inputs
 1. *X* [Array{Float64,2}; xij ∈ [0.00, 1.00]]: matrix of allele frequencies (Pool-seq data) set as the fixed effects
 2. *y* [Array{Float64,1}]: vector of phenotypes
 3. *Z* [Array{Any,2}]: matrix of relatedness (Fst or XX'/p where p is the number of columns in X) set as the random effects
 4. *METHOD_VAR_EST* [String]: method of variance parameter estimation choose "ML" for maximum likelihood or "REML" for restricted maximum likelihood (default="ML")
-5. *METHOD_FIX_EST* [String]: method of fixed effects estimation choose "LS" for least squares or "GLMNET" for elastic-net penalty (default="LS")
-6. *alfa* [Float64]: elastic penalty parameter ranging from 0.00 for L2-norm penalization (ridge) up to 1.00 for L1-norm penalization (LASSO) (default=0.00)
 
 # Outputs
 1. Intercept (b0) the mean of the phenotype data
@@ -302,11 +193,9 @@ e = rand(Distributions.Normal(0.00, Ve), n)
 y = (X*b) .+ (Z*u) .+ e
 b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z)
 b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML")
-b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_FIX_EST="GLMNET")
-b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST="REML", METHOD_FIX_EST="GLMNET")
 ```
 """
-function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1], METHOD_FIX_EST::String=["LS", "GLMNET"][1], alfa::Float64=0.0)
+function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, METHOD_VAR_EST::String=["ML", "REML"][1])
 	### MODEL: y = Xb + Zu + e, where: u~N(0,Vu) and e~(0,Ve)
 	### Generate copies of the input vector and matrices so that we don't modify the original ones
 	X = copy(X); y = copy(y); Z = copy(Z);
@@ -322,36 +211,22 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 	lower_limit = [1.0e-50, 1.0e-50]
 	upper_limit = [1.0e+50, 1.0e+50]
 	initial_VeVu = [1.0, 1.0]
-	if METHOD_FIX_EST == "GLMNET"
-		@rput X;
-		@rput y;
-		@rput alfa;
-		R"lambda = glmnet::cv.glmnet(x=X, y=y, alpha=alfa, intercept=FALSE)$lambda.min";
-		@rget lambda; ### expediting computations with a fixed lambda for GLMNET
-	else
-		lambda = 1.00
-	end
 	# optim_out = Optim.optimize(VeVu -> LMM_optim(VeVu, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=true), lower_limit, upper_limit, initial_VeVu)
 	### Optimization in Julia 1.0 is too darn slow! Going with R then! Importing Julia functions and variables into R.
 	@rput inverse;
-	@rput BLUE_least_squares;
-	@rput BLUE_glmnet;
 	@rput LMM_optim;
 	@rput X;
 	@rput y;
 	@rput Z;
 	@rput METHOD_VAR_EST;
-	@rput METHOD_FIX_EST;
-	@rput alfa;
-	@rput lambda;
 	@rput lower_limit;
 	@rput upper_limit;
 	@rput initial_VeVu;
-	R"optim_out = optim(par=initial_VeVu, fn=LMM_optim, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=TRUE, method='L-BFGS-B', lower=lower_limit, upper=upper_limit)"
+	R"optim_out = optim(par=initial_VeVu, fn=LMM_optim, X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, OPTIMIZE=TRUE, method='L-BFGS-B', lower=lower_limit, upper=upper_limit)"
 	@rget optim_out;
 	Ve, Vu = optim_out[:par]
 	### Fixed effects (b), random effects (u), and fixed effects variance (Vb) estimation (NOTE: No need to back-transform these estimated effects because we simply centered the explanatory variables meaning they're still on the same space)
-	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, METHOD_FIX_EST=METHOD_FIX_EST, alfa=alfa, lambda=lambda, OPTIMIZE=false)
+	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, OPTIMIZE=false)
 	### Output
 	return (b0=uy, b=b, u=u)
 end

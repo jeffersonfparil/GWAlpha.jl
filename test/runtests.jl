@@ -17,12 +17,19 @@ Test.@test runGWAlpha(geno_sync_fname,
                       10,
                       "GWAlpha") == 0
 
-### GWAlpha for GP
+### Linear mixed model (default: MLE)
 Test.@test runGWAlpha(geno_sync_fname,
                       pheno_csv_fname,
                       0.01,
                       10,
-                      "REML_GLMNET") == 0
+                      "MIXED") == 0
+
+### Linear mixed model (default: RR)
+Test.@test runGWAlpha(geno_sync_fname,
+                    pheno_csv_fname,
+                    0.01,
+                    10,
+                    "GLMNET") == 0
 
 ### GWAlpha for GWAS (parallel)
 using Distributed
