@@ -16,7 +16,6 @@ Install dependencies:
   - [glmnet](https://cran.r-project.org/web/packages/glmnet/index.html)
   - [RColorBrewer](https://cran.r-project.org/web/packages/RColorBrewer/index.html)
 
-See [.travis.yml](https://github.com/jeffersonfparil/GWAlpha.jl/tree/master/.travis.yml) for Ubuntu18.04-specific installation
 
 Installation in Julia:
 ```julia
