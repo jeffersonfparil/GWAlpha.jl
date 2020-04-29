@@ -40,19 +40,23 @@ Build genomic prediction models and perform genome-wide association on quantitat
 ```
 3. *maf* [Float64]: minimum allele frequency threshold (default=0.001)
 4. *depth* [Int64]: minimum sequencing depth threshold (default=1)
-5. *model* [String]: GPAS model to use (default="GWAlpha")
-- "GWAlpha" - iterative maximum likelihood estimation
-- "ML_LS" - linear mixed model using maximum likelihood (ML) estimation of variances and least squares (LS) estimation of fixed effects (additive allelic effects)
-- "REML_LS" - linear mixed model using restricted maximum likelihood (REML) and LS
+5. *model* [String]: model to use (default="GWAlpha")
+- **"GWAlpha"** - iterative maximum likelihood estimation
+- **"MIXED"** - linear mixed model
+- **"GLMNET"** - [elastic-net penalization](https://web.stanford.edu/~hastie/Papers/glmnet.pdf)
 6. *filename_random_covariate* [String]: filename of a precomputed headerless square symmetric matrix of pool relatedness (default=nothing)
-7. *random_covariate* [String]: type of relatedness matrix to compute, if filename_random_covariate==nothing (default="FST")
+7. *random_covariate* [String]: type of relatedness matrix to compute if `filename_random_covariate==nothing` (default="FST")
 - **"FST"** - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) (additionally [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see `?GWAlpha.relatedness_module.Fst_pairwise`)
 - **"RELATEDNESS"** - simple standardized relatedness matrix `XX'/p`, where `X` is the allele frequency matrix (Pool-seq data) and `p` is the number of columns of `X`
 8. *glmnet_alpha* [Float64]: elastic-net penalty (default=0.00 or ridge regression penalty)
-9. *fpr* [Float64]: false positive rate threshold for computing the Bonferroni threshold in significance testing (default=0.01)
-10. *plot* [Bool]: generate a Manhattan and quantile-quantile (QQ) plot and save in portable network (.png) format (default=false)
+9. *varcomp_est* [String]: variance component estimation method
+- **"ML"** - maximum likelihood estimation
+- **"REML"** - restricted maximum likelihood estimation
+10. *glmnet_alpha* [Float64]: elastic-net penalty (from 0.00 for ridge regression up to 1.00 for LASSO)
+11. *fpr* [Float64]: false positive rate for computing the Bonferroni threshold in significance testing (default=0.01)
+12. *plot* [Bool]: generate Manhattan and quantile-quantile (QQ) plots, and save in a portable network graphics (.png) format (default=false)
 
-## Outputs
+# Outputs
 1. Additive allelic effects array (header: CHROM, POS, ALLELE, FREQ, ALPHA, PVALUES, LOD) written into a comma-separated (.csv) file
 - "GWAlpha": `string(join(split(filename_sync, ".")[1:(end-1)], '.'), "-GWAlpha-OUTPUT.csv")`
 - "MIXED": `string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-OUTPUT.csv")`
