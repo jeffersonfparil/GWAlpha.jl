@@ -55,7 +55,7 @@ PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.001, dept
 5. *model* [String]: model to use (default="GWAlpha")
 	- **"GWAlpha"** - iterative maximum likelihood estimation
 	- **"MIXED"** - linear mixed model using maximum likelihood (ML) estimation of variances and least squares (LS) estimation of fixed effects (additive allelic effects)
-	- **"GLMNET"** - linear mixed model using ML and the [elastic-net penalization](https://web.stanford.edu/~hastie/Papers/glmnet.pdf) (GLMNET) to estimate the additive allelic effects
+	- **"GLMNET"** - [elastic-net penalization](https://web.stanford.edu/~hastie/Papers/glmnet.pdf) (GLMNET) to estimate the additive allelic effects
 6. *filename_random_covariate* [String]: filename of a precomputed headerless square symmetric matrix of pool relatedness (default=nothing)
 7. *random_covariate* [String]: type of relatedness matrix to compute if `filename_random_covariate==nothing` (default="FST")
 	- **"FST"** - pairwise estimation of fixation indices using Pool-seq data using [Weir and Cockerham, 1984 method](https://www.jstor.org/stable/2408641?seq=1) (additionally [Hivert et al, 2018 method](https://www.biorxiv.org/content/biorxiv/early/2018/03/20/282400.full.pdf) is also available: see `?GWAlpha.relatedness_module.Fst_pairwise`)
