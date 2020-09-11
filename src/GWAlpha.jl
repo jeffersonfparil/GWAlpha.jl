@@ -206,7 +206,7 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 			b0, b_hat, u_hat, Ve, Vu = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST=varcomp_est)
 			filename_output_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-OUTPUT.csv")
 			filename_ranef_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-RANEF-OUTPUT.csv")
-			filename_varcomp_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-VARCOMP-OUTPUT.csv")
+			filename_varcomp_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-VARCOMP_Ve_Vu-OUTPUT.csv")
 			writedlm(filename_ranef_csv, u_hat, ',') ### write headerless random effects
 			writedlm(filename_varcomp_csv, [Ve, Vu], ',') ### write headerless variances
 		else
@@ -244,6 +244,7 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 	println(filename_output_csv)
 	if model == "MIXED"
 		println(filename_ranef_csv)
+		println(filename_varcomp_csv)
 	end
 	if plot
 		println(filename_output_png)
