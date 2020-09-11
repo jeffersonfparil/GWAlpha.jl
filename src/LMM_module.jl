@@ -228,7 +228,7 @@ function LMM(;X::Array{Float64,2}, y::Array{Float64,1}, Z::Array{Float64,2}, MET
 	### Fixed effects (b), random effects (u), and fixed effects variance (Vb) estimation (NOTE: No need to back-transform these estimated effects because we simply centered the explanatory variables meaning they're still on the same space)
 	b, u, Vb = LMM_optim([Ve, Vu], X=X, y=y, Z=Z, METHOD_VAR_EST=METHOD_VAR_EST, OPTIMIZE=false)
 	### Output
-	return (b0=uy, b=b, u=u)
+	return (b0=uy, b=b, u=u, Ve=Ve, Vu=Vu)
 end
 
 end #end of LMM module

@@ -117,8 +117,8 @@ Empirical p-values were calculated by modelling the additive allelic effects (α
 """
 function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.001, depth::Int64=1, model::String=["GWAlpha", "MIXED", "GLMNET"][1], filename_random_covariate=nothing, random_covariate::String=["FST", "RELATEDNESS"][1], varcomp_est::String=["ML", "REML"][1], glmnet_alpha::Float64=collect(range(0.0,1.0,step=0.01,))[1], fpr::Float64=0.01, plot::Bool=false)
 	# ### TEST
-	# filename_sync = "test/test.sync"
-	# filename_phen = ["test/test.py", "test/test.csv"][2]
+	# filename_sync = "../test/test.sync"
+	# filename_phen = ["../test/test.py", "../test/test.csv"][2]
 	# maf = 0.001
 	# depth = 10
 	# model = ["GWAlpha", "MIXED", "GLMNET"][2]
@@ -203,10 +203,12 @@ function PoolGPAS(;filename_sync::String, filename_phen::String, maf::Float64=0.
 			println(string("Identifying the mixed model to use: ", model))
 			METHOD_VAR_EST = string(split(model, "_")[1])
 			println(string("Fitting a mixed model using ", METHOD_VAR_EST, " variance estimation with ", random_covariate, " as the random covariate."))
-			b0, b_hat, u_hat = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST=varcomp_est)
+			b0, b_hat, u_hat, Ve, Vu = LMM_module.LMM(X=X, y=y, Z=Z, METHOD_VAR_EST=varcomp_est)
 			filename_output_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-OUTPUT.csv")
 			filename_ranef_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-RANEF-OUTPUT.csv")
+			filename_varcomp_csv = string(join(split(filename_sync_filtered, ".")[1:(end-1)], '.'), "-", model, varcomp_est, "_", random_covariate, "-VARCOMP-OUTPUT.csv")
 			writedlm(filename_ranef_csv, u_hat, ',') ### write headerless random effects
+			writedlm(filename_varcomp_csv, [Ve, Vu], ',') ### write headerless variances
 		else
 			println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
 			println("Performing Elastic-Net Regression")
