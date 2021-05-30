@@ -122,7 +122,7 @@ The linear mixed model is defined as **y = Xb + Zu + e**, where:
 - **y ~ N(0, V)**
 - **V = (Z (σ²uI) Z') + (σ²eI)**
 - variance components (**σ²e**, **σ²u**) are estimated via maximum likelihood (ML) or restricted maximum likelihood (REML)
-- fixed effects (**b**) are estimated by solving: **(X' * V⁻¹) * inverse(X * X' * V⁻¹) * y**
+- fixed effects (**b**) are estimated by solving: **(X' * V⁻¹) * (X * X' * V⁻¹)⁻¹ * y**
 - random effects (**u**) are estimated by solving: **(σ²uI) * Z' * V⁻¹ * (y - (X*b))**
 
 Empirical p-values were calculated by modelling the additive allelic effects (α) using a normal distribution with mean and variance estimated using maximum likelihood.
